@@ -29,6 +29,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm prompts:check
       - run: pnpm public:check && pnpm docs:check-links
+      - run: pnpm i18n:check
       - run: pnpm format:check
       - run: pnpm lint
       - run: pnpm typecheck
@@ -68,17 +69,12 @@ jobs:
   pwa:
     name: PWA update
     runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.62.1-noble
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:pwa:update
 
   e2e-chromium:

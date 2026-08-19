@@ -127,7 +127,7 @@ try {
 		});
 	});
 	browser = await chromium.launch({ channel: process.env.CI ? undefined : 'chrome' });
-	const context = await browser.newContext({ baseURL: origin });
+	const context = await browser.newContext({ baseURL: origin, locale: 'ja-JP' });
 	const page = await context.newPage();
 	await page.goto('/onboarding');
 	await page.getByLabel('呼ばれたい名前').fill('PWA Update Learner');
@@ -143,6 +143,8 @@ try {
 	);
 	await setActiveCurriculumTotalDays(page, 270);
 	const preservedBeforeUpdate = await readPreservedState(page);
+	// Simulate a v1.7 learner: it has durable learner data but no UI-locale key.
+	await page.evaluate(() => globalThis.localStorage.removeItem('trellune.uiLocale.v1'));
 
 	await page.goto('/import');
 	const editor = page.getByLabel('会話AIが返したJSON');
@@ -175,11 +177,16 @@ try {
 	);
 	assert.deepEqual(await readPreservedState(page), preservedBeforeUpdate);
 	assert.equal(preservedBeforeUpdate.activeTotalDays?.value, 270);
+	assert.equal(
+		await page.evaluate(() => globalThis.localStorage.getItem('trellune.uiLocale.v1')),
+		null,
+	);
+	assert.equal(await page.evaluate(() => globalThis.document.documentElement.lang), 'ja');
 	await page.goto('/curriculum');
 	await page.getByRole('heading', { name: '365日の地図' }).waitFor({ state: 'visible' });
 	assert.equal(await page.getByRole('alert').count(), 0);
 	process.stdout.write(
-		'PWA build A→B proactive update, consent, IndexedDB preservation, and ACTIVE 270 / AVAILABLE 365 compatibility test passed.\n',
+		'PWA build A→B proactive update, consent, IndexedDB preservation, legacy Japanese locale fallback, and ACTIVE 270 / AVAILABLE 365 compatibility test passed.\n',
 	);
 	await context.close();
 } finally {

@@ -5,18 +5,19 @@ import { useAppState } from '../state/AppState';
 import { usePwaUpdate } from '../pwa/update';
 import { isDemoMode } from '../demo';
 import { resetDemoData } from '../storage/db';
-
-const navItems = [
-	{ to: '/today', label: '今日', icon: 'today' as const },
-	{ to: '/curriculum', label: '学ぶ', icon: 'learn' as const },
-	{ to: '/reviews', label: '復習', icon: 'review' as const },
-	{ to: '/voice', label: '会話AI', icon: 'bridge' as const },
-	{ to: '/settings', label: '設定', icon: 'settings' as const },
-];
+import { useLocale } from '../i18n';
 
 export function AppShell({ children }: PropsWithChildren) {
 	const { data, editorDirty } = useAppState();
+	const { locale, setLocale, t } = useLocale();
 	const pwaUpdate = usePwaUpdate();
+	const navItems = [
+		{ to: '/today', label: t('nav.today'), icon: 'today' as const },
+		{ to: '/curriculum', label: t('nav.learn'), icon: 'learn' as const },
+		{ to: '/reviews', label: t('nav.reviews'), icon: 'review' as const },
+		{ to: '/voice', label: t('nav.conversation'), icon: 'bridge' as const },
+		{ to: '/settings', label: t('nav.settings'), icon: 'settings' as const },
+	];
 	const [online, setOnline] = useState(() => navigator.onLine);
 	const [demoResetting, setDemoResetting] = useState(false);
 	useEffect(() => {
@@ -55,14 +56,14 @@ export function AppShell({ children }: PropsWithChildren) {
 	return (
 		<div className="app-shell">
 			<a className="skip-link" href="#main-content">
-				本文へ移動
+				{t('skip.main')}
 			</a>
 			<header className="topbar">
-				<NavLink className="wordmark" to="/today" aria-label="Trellune ホーム">
+				<NavLink className="wordmark" to="/today" aria-label={t('home.aria')}>
 					<span className="wordmark__mark">TL</span>
 					<span>Trellune</span>
 				</NavLink>
-				<nav className="desktop-nav" aria-label="メインナビゲーション">
+				<nav className="desktop-nav" aria-label={t('nav.main')}>
 					{navItems.map((item) => (
 						<NavLink
 							key={item.to}
@@ -73,17 +74,28 @@ export function AppShell({ children }: PropsWithChildren) {
 						</NavLink>
 					))}
 				</nav>
-				<div className="topbar__status" aria-label={`Core ${completed}/3 完了`}>
+				<div className="topbar__status" aria-label={`Core ${completed}/3 ${t('core.complete')} `}>
 					<span className={online ? 'network-dot' : 'network-dot is-offline'}>
-						{online ? 'オンライン' : 'オフライン'}
+						{online ? t('online') : t('offline')}
 					</span>
 					<span>{completed}/3</span>
 					<span className="topbar__status-label">CORE</span>
 				</div>
+				<label className="locale-select">
+					<span className="sr-only">{t('language.label')}</span>
+					<select
+						value={locale}
+						onChange={(event) => setLocale(event.target.value as typeof locale)}
+						aria-label={t('language.label')}
+					>
+						<option value="ja">{t('language.ja')}</option>
+						<option value="en">{t('language.en')}</option>
+					</select>
+				</label>
 			</header>
 			{isDemoMode ? (
 				<div className="demo-banner" role="status">
-					<span>公開デモ: 合成データのみ・同期なし。保存先は通常版と分離されています。</span>
+					<span>{t('demo.banner')}</span>
 					<button
 						className="button"
 						type="button"
@@ -95,7 +107,7 @@ export function AppShell({ children }: PropsWithChildren) {
 							});
 						}}
 					>
-						{demoResetting ? 'リセット中…' : '合成データをリセット'}
+						{demoResetting ? t('demo.resetting') : t('demo.reset')}
 					</button>
 					<button
 						className="button"
@@ -104,35 +116,30 @@ export function AppShell({ children }: PropsWithChildren) {
 							window.location.assign('/curriculum/6');
 						}}
 					>
-						Reading/Writing の例へ
+						{t('demo.readingExample')}
 					</button>
+					<small>{t('demo.curriculumNotice')}</small>
 				</div>
 			) : null}
 			{pwaUpdate.available ? (
 				<div className="update-banner" role="status">
-					<span>新しいバージョンを利用できます。</span>
+					<span>{t('update.available')}</span>
 					<button
 						className="button"
 						type="button"
 						onClick={() => {
-							if (
-								editorDirty &&
-								!window.confirm(
-									'取込画面に未保存の入力があります。更新すると入力が失われます。更新しますか？',
-								)
-							)
-								return;
+							if (editorDirty && !window.confirm(t('update.unsavedConfirm'))) return;
 							void pwaUpdate.apply();
 						}}
 					>
-						確認して更新
+						{t('update.apply')}
 					</button>
 				</div>
 			) : null}
 			<main id="main-content" className="main-content" tabIndex={-1}>
 				{children}
 			</main>
-			<nav className="mobile-nav" aria-label="モバイルナビゲーション">
+			<nav className="mobile-nav" aria-label={t('nav.mobile')}>
 				{navItems.map((item) => (
 					<NavLink
 						key={item.to}

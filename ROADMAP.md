@@ -1,10 +1,11 @@
 # Roadmap
 
-## Current: v1.7 public OSS release
+## Current: v1.8.0 Japanese/English UI release candidate
 
 - Provider-neutral, manual-first conversation-AI contract and capability presets
 - Synthetic local-only demo and reproducible clean-public export
 - Community provider and device acceptance pathways
+- Japanese and English product UI, with Japanese-first curriculum support content
 
 ## Next
 

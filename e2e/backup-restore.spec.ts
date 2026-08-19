@@ -62,7 +62,7 @@ async function downloadBackup(page: Page): Promise<Buffer> {
 	await expect(page.getByText(/JSONは暗号化されません/u)).toBeVisible();
 	await expect(page.getByText(/共有フォルダーや公開リンクを避け/u)).toBeVisible();
 	const pending = page.waitForEvent('download');
-	await page.getByRole('button', { name: 'JSONを保存' }).click();
+	await page.getByRole('button', { name: 'バックアップを書き出す' }).click();
 	const download = await pending;
 	const path = await download.path();
 	if (!path) throw new Error('Playwright did not provide a download path');

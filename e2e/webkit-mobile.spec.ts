@@ -64,6 +64,23 @@ test.describe('WebKit mobile release coverage', () => {
 		}
 	});
 
+	test('switches the mobile learner UI to English and preserves the choice after reload', async ({
+		page,
+	}) => {
+		await page.setViewportSize({ width: 390, height: 844 });
+		await onboard(page);
+		await page.getByLabel('表示言語').selectOption('en');
+		await expect(page.getByRole('heading', { name: "Today's Core" })).toBeVisible();
+		await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+		expect(
+			await page.evaluate(
+				() => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+			),
+		).toBe(true);
+		await page.reload();
+		await expect(page.getByRole('heading', { name: "Today's Core" })).toBeVisible();
+	});
+
 	test('renders provider selection, offline state, and strict SESSION_JSON preview', async ({
 		context,
 		page,
@@ -102,7 +119,7 @@ test.describe('WebKit mobile release coverage', () => {
 
 		await page.goto('/backup');
 		const downloadPromise = page.waitForEvent('download');
-		await page.getByRole('button', { name: 'JSONを保存' }).click();
+		await page.getByRole('button', { name: 'バックアップを書き出す' }).click();
 		const download = await downloadPromise;
 		const backupPath = await download.path();
 		if (!backupPath) throw new Error('WebKit did not provide the synthetic backup path.');
