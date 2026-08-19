@@ -1,0 +1,16 @@
+node_modules/
+dist/
+coverage/
+.wrangler/
+.dev.vars
+.env*
+!.env.example
+wrangler.local.jsonc
+playwright-report/
+test-results/
+*.sqlite*
+*.db
+*.tsbuildinfo
+backups/
+learner-data/
+src/data/private/

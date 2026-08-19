@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"lib": ["ES2022", "WebWorker"],
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"strict": true,
+		"skipLibCheck": true,
+		"noEmit": true,
+		"types": ["@cloudflare/workers-types"]
+	},
+	"include": [
+		"src/index.ts",
+		"src/worker/**/*.ts",
+		"src/domain/**/*.ts",
+		"src/lib/schemas.ts",
+		"src/raw-assets.d.ts"
+	]
+}

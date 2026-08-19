@@ -1,0 +1,25 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	// Legacy local Worker identifier. Do not rename during a product-only rebrand.
+	"name": "english-os",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-08-05",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"assets": {
+		"binding": "ASSETS",
+		"not_found_handling": "single-page-application",
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			// Legacy local database name preserves existing developer state.
+			"database_name": "english-os-local",
+			"database_id": "local",
+			"migrations_dir": "migrations",
+		},
+	],
+	"observability": {
+		"enabled": true,
+	},
+	"upload_source_maps": true,
+}

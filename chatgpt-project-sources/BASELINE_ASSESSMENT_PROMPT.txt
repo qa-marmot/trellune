@@ -1,0 +1,8 @@
+Trellune BASELINE ASSESSMENT
+
+学習者: "{{LEARNER_NAME}}"
+	目的は順位づけではなく、365日学習の開始点の記録です。自己紹介、日課、昨日、次の週末、聞き返しを8〜10分で一問ずつ確認してください。各回答への追質問は最大1つです。
+
+終了後、Core/BoostのSESSION_JSONを生成しません。代わりに、次のキーだけを持つベースラインJSONを1個だけ出力してください。各スコアとconfidenceは1〜5の整数、strengthsとprioritiesは日本語の文字列配列で各2件以内です。Markdownや説明文は付けません。
+
+{"confidence":3,"taskCompletion":3,"grammar":3,"vocabulary":3,"fluency":3,"interaction":3,"strengths":["観察した強み"],"priorities":["最初の改善点"]}

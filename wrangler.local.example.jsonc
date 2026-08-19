@@ -1,0 +1,51 @@
+// Copy this file to wrangler.local.jsonc before configuring a remote Worker.
+// Keep the resulting file private: it is ignored by Git.
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "trellune-your-environment",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-08-05",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	"assets": {
+		"binding": "ASSETS",
+		"not_found_handling": "single-page-application",
+	},
+	"env": {
+		"dev": {
+			"name": "trellune-your-development-environment",
+			"workers_dev": false,
+			"routes": [{ "pattern": "dev.your-domain.example", "custom_domain": true }],
+			"vars": {
+				"ACCESS_TEAM_DOMAIN": "your-team.cloudflareaccess.com",
+				"ACCESS_AUD": "your-development-access-application-audience",
+			},
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "trellune-development",
+					"database_id": "replace-with-your-development-d1-database-id",
+					"migrations_dir": "migrations",
+				},
+			],
+		},
+		"production": {
+			"name": "trellune-your-environment",
+			"workers_dev": false,
+			"routes": [{ "pattern": "your-domain.example", "custom_domain": true }],
+			"vars": {
+				"ACCESS_TEAM_DOMAIN": "your-team.cloudflareaccess.com",
+				"ACCESS_AUD": "your-access-application-audience",
+			},
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "trellune-production",
+					"database_id": "replace-with-your-d1-database-id",
+					"migrations_dir": "migrations",
+				},
+			],
+		},
+	},
+	"observability": { "enabled": true },
+	"upload_source_maps": true,
+}

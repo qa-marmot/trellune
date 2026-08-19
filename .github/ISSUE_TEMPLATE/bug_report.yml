@@ -1,0 +1,31 @@
+name: Bug report
+description: Report a reproducible problem without private learner data.
+title: 'bug: '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: 'Do not include exports, pasted JSON, Access tokens, emails, or other personal data. Use a private security report for sensitive issues.'
+  - type: textarea
+    id: behavior
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      placeholder: 'Use synthetic examples only.'
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        [Curriculum, Practice, Sync, Backup, PWA, Accessibility, Provider bridge, Documentation]

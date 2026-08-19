@@ -1,0 +1,7 @@
+dist
+coverage
+node_modules
+playwright-report
+test-results
+worker-configuration.d.ts
+pnpm-lock.yaml

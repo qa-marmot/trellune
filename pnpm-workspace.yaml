@@ -1,0 +1,11 @@
+packages:
+  - '.'
+overrides:
+  'nanoid@<3.3.18': 3.3.18
+allowBuilds:
+  esbuild: true
+  sharp: true
+  workerd: true
+minimumReleaseAgeExclude:
+  - miniflare@5.20260801.0-alpha
+  - wrangler@4.119.0

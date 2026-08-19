@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">Trellune</title>
+  <desc id="desc">A local-first 365-day English learning PWA</desc>
+  <rect width="1280" height="640" fill="#f6f2e7"/>
+  <circle cx="1070" cy="105" r="200" fill="#dfe83d" opacity=".86"/>
+  <path d="M0 520 C230 410 330 690 590 550 S940 370 1280 500 V640 H0Z" fill="#c5edf0"/>
+  <rect x="88" y="88" width="118" height="118" rx="34" fill="#dfe83d" stroke="#151b23" stroke-width="8"/>
+  <text x="147" y="161" text-anchor="middle" fill="#151b23" font-family="Arial, sans-serif" font-size="39" font-weight="700">TL</text>
+  <text x="88" y="292" fill="#151b23" font-family="Arial, sans-serif" font-size="92" font-weight="700">Trellune</text>
+  <text x="93" y="358" fill="#394452" font-family="Arial, sans-serif" font-size="33">A local-first 365-day English learning PWA</text>
+  <g transform="translate(91 422)" font-family="Arial, sans-serif" font-size="26" font-weight="700">
+    <rect width="222" height="58" rx="29" fill="#151b23"/>
+    <text x="111" y="38" text-anchor="middle" fill="#f6f2e7">OFFLINE READY</text>
+    <rect x="240" width="174" height="58" rx="29" fill="#ff806f"/>
+    <text x="327" y="38" text-anchor="middle" fill="#151b23">NO AI API</text>
+    <rect x="432" width="218" height="58" rx="29" fill="#dfe83d"/>
+    <text x="541" y="38" text-anchor="middle" fill="#151b23">BRING YOUR AI</text>
+  </g>
+  <text x="93" y="550" fill="#394452" font-family="Arial, sans-serif" font-size="25">Spaced retrieval · practice · reading/writing · conversation</text>
+</svg>

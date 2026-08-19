@@ -1,0 +1,25 @@
+name: Feature request
+description: Suggest a learner-centered improvement.
+title: 'idea: '
+labels: [enhancement]
+body:
+  - type: textarea
+    id: learner-problem
+    attributes:
+      label: Learner problem
+      description: 'What learning or accessibility problem would this solve?'
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+    validations:
+      required: true
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Constraints considered
+      options:
+        - label: 'Does not require an AI API or provider automation'
+        - label: 'Does not weaken Core/Boost or data-integrity contracts'

@@ -1,0 +1,9 @@
+Trellune WEEKLY ASSESSMENT
+
+対象: Day {{START_DAY}}〜{{END_DAY}}
+目標: ["{{WEEK_OBJECTIVES}}"]
+学習済み文法: ["{{GRAMMAR}}"]
+学習済み表現: ["{{PHRASES}}"]
+繰り返したミス: ["{{REPEATED_MISTAKES}}"]
+
+対象範囲だけで8〜10分、一度に一問ずつ評価してください。終了後に5観点を各1〜5、根拠、維持する強み1つ、次週の優先課題1つを示してください。週次評価はCore完了を変更せず、SESSION_JSONを生成しません。

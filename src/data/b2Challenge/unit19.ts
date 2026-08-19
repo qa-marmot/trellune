@@ -1,0 +1,298 @@
+import { buildB2ChallengeUnit, type B2ChallengeLessonSeed } from './shared';
+
+const seeds = [
+	{
+		day: 301,
+		theme: 'local-first appを平易に説明する',
+		objective: '専門語を目的、仕組み、利用者への意味へ翻訳する',
+		grammar: [
+			'defining a complex idea',
+			'in simple terms / which means / rather thanを使う',
+			'定義だけで終わらず、聞き手の行動や利点へつなげて説明します。',
+			'In simple terms, the app saves changes on your device first.',
+			'That means you can continue rather than waiting for the network.',
+			'local-firstを初心者へ説明する。',
+			'The app keeps a local copy first, which means your work remains available when the connection is weak.',
+		],
+		vocabulary:
+			'local copy|端末内のcopy;plain-language explanation|平易な説明;user impact|利用者への影響',
+		phrases:
+			'In simple terms,...|簡単に言うと…。;What this means for you is...|利用者にとっては…。',
+		voiceTask: 'software概念を専門語なしで3分説明し、相手のclarification三回へ別の例で答える。',
+		skillTargets: ['speaking', 'interaction', 'vocabulary', 'fluency'],
+	},
+	{
+		day: 302,
+		theme: '複数段階のprocessを地図化する',
+		objective: '目的、順序、分岐、失敗時対応を聞き手が追える形にする',
+		grammar: [
+			'sequencing with branches',
+			'once / if / otherwise / after whichを使う',
+			'直線的手順と条件分岐を区別し、各段階の目的を短く示します。',
+			'Once the file is checked, it is stored; if validation fails, it remains editable.',
+			'The service sends a confirmation, after which the user can close the page.',
+			'予約processの分岐を説明する。',
+			'Choose a time first; if it is still available, confirm your details, otherwise return to the calendar.',
+		],
+		vocabulary: 'branch|分岐;validation step|検証段階;fallback action|失敗時の行動',
+		phrases:
+			'Once that is complete,...|それが完了したら…。;If that fails,...|それが失敗した場合…。',
+		voiceTask:
+			'backupまたはbooking processを4分説明し、聞き手に順序をretellしてもらって誤解を修復する。',
+		skillTargets: ['speaking', 'listening', 'interaction', 'grammar'],
+	},
+	{
+		day: 303,
+		theme: 'AIの推奨と決定を区別する',
+		objective: 'input、suggestion、human decisionの境界を正確に示す',
+		grammar: [
+			'passive for system processes',
+			'is generated / is reviewed / is not automatically appliedを使う',
+			'誰が実行するかよりprocessが重要な部分だけpassiveを使い、責任主体は省略しすぎません。',
+			'A suggestion is generated from the selected context.',
+			'It is reviewed by the user and is not automatically applied.',
+			'推奨機能の流れと責任を説明する。',
+			'Possible actions are suggested by the system, but the final choice is made by the learner.',
+		],
+		vocabulary:
+			'recommendation|推奨;human oversight|人による確認;automatically applied|自動適用される',
+		phrases:
+			'The system suggests..., but...|systemは…を提案しますが…。;The final decision is made by...|最終判断は…が行います。',
+		voiceTask: 'AI featureを4分説明し、できること、できないこと、human checkを例で示す。',
+		skillTargets: ['speaking', 'grammar', 'interaction', 'vocabulary'],
+	},
+	{
+		day: 304,
+		theme: '原因が複数ある遅延を説明する',
+		objective: '主因、補助要因、結果を区別して責任追及に偏らず話す',
+		grammar: [
+			'multi-cause explanation',
+			'was mainly due to / contributed to / as a resultを使う',
+			'原因を一つに単純化せず、影響の大きさと因果の順を明確にします。',
+			'The delay was mainly due to a supplier change, while unclear approval steps also contributed.',
+			'As a result, testing began two weeks later.',
+			'project遅延の原因を構造化する。',
+			'The outage caused the first delay, but a missing backup plan extended it; as a result, the release moved to Friday.',
+		],
+		vocabulary: 'contributing factor|補助要因;primary cause|主因;extend a delay|遅延を長引かせる',
+		phrases: 'The main cause was...|主因は…。;Another factor that contributed was...|別の要因は…。',
+		voiceTask:
+			'複数原因のincident説明を聞き、main cause、factor、impact、lessonを三分でretellする。',
+		skillTargets: ['listening', 'speaking', 'fluency', 'grammar'],
+	},
+	{
+		day: 305,
+		theme: '抽象的なideaを例で具体化する',
+		objective: 'general claim、具体例、例の意味を三段階でつなぐ',
+		grammar: [
+			'example-to-meaning link',
+			'for instance / this matters because / it shows thatを使う',
+			'例を置くだけでなく、その例が主張をどう支えるかを明示します。',
+			'Flexible access can reduce small barriers; for instance, recorded instructions help shift workers.',
+			'This matters because the same service becomes usable at different times.',
+			'accessibilityを例で説明する。',
+			'A clear error message is a small example, but it shows that design can help users recover without expert support.',
+		],
+		vocabulary: 'illustrate|例で示す;abstract idea|抽象的なidea;make concrete|具体化する',
+		phrases:
+			'A simple example is...|簡単な例は…。;This example shows that...|この例は…を示します。',
+		voiceTask: 'fairness、reliability、communityの一語を選び、異なる具体例二つで5分説明する。',
+		skillTargets: ['speaking', 'vocabulary', 'interaction', 'fluency'],
+	},
+	{
+		day: 306,
+		theme: 'connected speechから手順の要点を取る',
+		objective: '未知語があってもsignal wordsから順序と注意点を特定する',
+		grammar: [
+			'listening for structure signals',
+			'first / once / the main thing / finallyを手掛かりにする',
+			'全単語を理解しようとせず、順序signalと強調された注意点を優先します。',
+			'The speaker says, “The main thing is to keep the original file.”',
+			'After that, she moves to the recovery step.',
+			'手順audioを三点で要約する。',
+			'First keep the original, then test the copy, and finally record what changed.',
+		],
+		vocabulary: 'signal word|構造を示す語;connected speech|連結した発話;key instruction|重要な指示',
+		phrases: 'The key instruction was...|重要な指示は…。;The next step was to...|次の手順は…。',
+		voiceTask:
+			'near-natural speedの3分processを一度聞き、手順四つとwarning一つを自分の言葉で説明する。',
+		skillTargets: ['listening', 'speaking', 'fluency', 'interaction'],
+	},
+	{
+		day: 307,
+		theme: '専門語を使わずnetwork問題を説明する',
+		objective: '症状、利用者への影響、回復策をcategoryとanalogyで表す',
+		grammar: [
+			'paraphrasing technical language',
+			'it behaves like / in other words / what users notice isを使う',
+			'正確さを失わない範囲で、専門用語を日常的な動作や見える症状へ置き換えます。',
+			'It behaves like a queue that stops moving when one step fails.',
+			'In other words, the data is safe, but the latest change has not reached the server yet.',
+			'network delayを非専門家へ説明する。',
+			'What users notice is a slow update; the app keeps the change locally and tries again later.',
+		],
+		vocabulary: 'visible symptom|見える症状;analogy|たとえ;temporary interruption|一時的中断',
+		phrases:
+			'It behaves a little like...|少し…のように動きます。;What users will notice is...|利用者が気づくのは…。',
+		voiceTask:
+			'専門語カードを伏せ、network issueをanalogy、症状、recoveryで説明し質問へ言い換えて答える。',
+		skillTargets: ['speaking', 'interaction', 'vocabulary', 'fluency'],
+	},
+	{
+		day: 308,
+		theme: 'policy説明の範囲を限定する',
+		objective: '一般rule、例外、未決定事項を混同せず伝える',
+		grammar: [
+			'scope and exception clauses',
+			'applies to / except when / has not yet been decidedを使う',
+			'説明の対象と対象外を先に示すことで、聞き手の過剰な一般化を防ぎます。',
+			'The rule applies to shared devices except when emergency access is required.',
+			'How long records are kept has not yet been decided.',
+			'simple policyの範囲と例外を説明する。',
+			'The booking limit applies to large rooms, while small spaces remain open unless maintenance is scheduled.',
+		],
+		vocabulary: 'scope|適用範囲;exception|例外;pending decision|未決定事項',
+		phrases:
+			'This applies to...|これは…に適用されます。;An exception is made when...|…の場合は例外です。',
+		voiceTask: 'workplace ruleを4分説明し、相手のedge-case質問三つにscopeを保って答える。',
+		skillTargets: ['speaking', 'interaction', 'grammar', 'listening'],
+	},
+	{
+		day: 309,
+		theme: 'data chartの主な変化を口頭化する',
+		objective: '全数値を列挙せずtrend、例外、解釈の限界を述べる',
+		grammar: [
+			'describing trends cautiously',
+			'overall / remained stable / may reflectを使う',
+			'観察できるtrendと、その理由についての推測を分けて表現します。',
+			'Overall, participation rose gradually while weekend use remained stable.',
+			'The final increase may reflect the new schedule, but the chart does not prove the cause.',
+			'簡単なchartを三文で説明する。',
+			'Use increased in the first month, levelled off in the second, and then rose slightly after the opening hours changed.',
+		],
+		vocabulary: 'trend|傾向;level off|横ばいになる;interpretation|解釈',
+		phrases:
+			'Overall, the main trend is...|全体の主な傾向は…。;This may reflect..., but...|これは…を反映するかもしれませんが…。',
+		voiceTask: 'simple chartの口頭説明を聞き、trend、exception、言えないことを3分summaryする。',
+		skillTargets: ['listening', 'speaking', 'vocabulary', 'grammar'],
+	},
+	{
+		day: 310,
+		theme: '複雑な質問を小分けにする',
+		objective: 'embedded questionを確認し、回答の順序を提案してから話す',
+		grammar: [
+			'indirect and embedded questions',
+			'what you are asking is / whether / how farを使う',
+			'複数要素の質問は一度言い換え、どの部分から答えるか合意します。',
+			'What you are asking is whether the change is safe and how much it will cost.',
+			'I will address safety first, then explain what remains uncertain about cost.',
+			'二部構成の質問を整理する。',
+			'You are asking how the service works and whether people can opt out; I will explain the process first.',
+		],
+		vocabulary:
+			'multi-part question|複数部分の質問;break down|分解する;address a point|論点に答える',
+		phrases:
+			'Let me break that into two parts.|二つに分けて答えます。;I will address... first.|まず…に答えます。',
+		voiceTask: '複雑な質問五つを聞き、言い換え、回答順序、短い回答、理解確認を行う。',
+		skillTargets: ['listening', 'interaction', 'speaking', 'grammar'],
+	},
+	{
+		day: 311,
+		theme: '地域projectを異なるaudienceへ説明する',
+		objective: '目的を保ちながら住民、volunteer、sponsorでdetailを選び直す',
+		grammar: [
+			'audience adaptation with relative clauses',
+			'people who / the part that / what matters toを使う',
+			'誰に何が関係するかをrelative clauseで短く示し、不要なdetailを削ります。',
+			'Residents who live nearby need clear information about timing.',
+			'Sponsors may focus on the part that shows measurable community benefit.',
+			'同じprojectを二audienceへ説明する。',
+			'For volunteers, what matters is the schedule; for residents, the key point is how noise will be limited.',
+		],
+		vocabulary:
+			'audience need|聞き手のneed;relevant detail|関係するdetail;tailor|相手向けに調整する',
+		phrases:
+			'For this audience, the key point is...|この聞き手には…が要点です。;People who... need to know...|…する人は…を知る必要があります。',
+		voiceTask: '同じcommunity projectを住民向け2分、volunteer向け2分、sponsor向け2分で説明する。',
+		skillTargets: ['speaking', 'interaction', 'fluency', 'grammar'],
+	},
+	{
+		day: 312,
+		theme: '誤解の原因を診断して修復する',
+		objective: '曖昧な語、assumption、欠けたcontextを特定して再説明する',
+		grammar: [
+			'repairing an explanation',
+			'when I said / I meant / I should have explainedを使う',
+			'同じ文を大声で反復せず、誤解の種類を確認して説明方法を変えます。',
+			'When I said “local,” I meant stored on the device, not limited to one place.',
+			'I should have explained that the process is automatic only after approval.',
+			'曖昧な説明を修復する。',
+			'I used “free” to mean no fee; it does not mean there are no usage limits.',
+		],
+		vocabulary: 'assumption|思い込み;ambiguity|曖昧さ;repair strategy|修復方法',
+		phrases:
+			'When I said..., I meant...|…と言った時は…の意味でした。;Let me explain that another way.|別の方法で説明します。',
+		voiceTask: '説明中に三種類の誤解を受け、原因確認、言い換え、新例、理解checkで修復する。',
+		skillTargets: ['interaction', 'speaking', 'listening', 'fluency'],
+	},
+	{
+		day: 313,
+		theme: '長い説明を一分へ圧縮する',
+		objective: 'purpose、main mechanism、one limitationだけを残して要約する',
+		grammar: [
+			'compression and prioritization',
+			'the purpose is / essentially / one limitation isを使う',
+			'detailを均等に短くするのではなく、聞き手の次の行動に必要な情報を選びます。',
+			'Essentially, the system checks changes before sharing them.',
+			'One limitation is that the first setup still requires a connection.',
+			'五分説明を一分に圧縮する。',
+			'The purpose is to protect local work; it saves first, checks the change, and sends it later, although setup must be online.',
+		],
+		vocabulary: 'compress|短く圧縮する;essential point|不可欠な要点;omit|省く',
+		phrases: 'Essentially,...|本質的には…。;One limitation to keep in mind is...|留意する制限は…。',
+		voiceTask: '5分の説明を聞き、60秒summary、20秒summaryを作り、何を省いたか説明する。',
+		skillTargets: ['listening', 'speaking', 'fluency', 'vocabulary'],
+	},
+	{
+		day: 314,
+		theme: '比喩の限界を説明する',
+		objective: 'useful analogyを使いながら、誤解を生む違いも明示する',
+		grammar: [
+			'analogy with qualification',
+			'is like / unlike / the analogy breaks down whenを使う',
+			'比喩の共通点と違いを一つずつ示し、比喩を事実そのものにしません。',
+			'A sync queue is like a line of messages waiting to be sent.',
+			'Unlike a physical line, failed messages can be retried without losing their place.',
+			'technology概念をanalogyで説明する。',
+			'A backup is like a snapshot, but the analogy breaks down because later changes can be compared and restored selectively.',
+		],
+		vocabulary: 'analogy|類比;similarity|共通点;break down|当てはまらなくなる',
+		phrases:
+			'It is similar to... in that...|…という点で…に似ています。;The analogy breaks down when...|…の場合は比喩が当てはまりません。',
+		voiceTask: 'software概念二つへanalogyを作り、各々のuseful pointとlimitを4分で説明する。',
+		skillTargets: ['speaking', 'interaction', 'vocabulary', 'grammar'],
+	},
+	{
+		day: 315,
+		theme: 'Unit 19 Clear Explanation Lab',
+		objective: '複雑なideaを構造化し、audienceへ調整し、質問で修復する',
+		grammar: [
+			'clear explanation integration',
+			'definition / sequence / cause / scope / analogyを統合する',
+			'一つの固定templateではなく、説明対象と聞き手に合う二つか三つの構造を選びます。',
+			'In simple terms, the service stores a safe copy first, after which it checks whether sharing is possible.',
+			'The analogy is useful for timing, although it does not describe every security detail.',
+			'複雑なserviceを初見の人へ説明する。',
+			'Start with the user benefit, explain the three main steps, name one limitation, and invite a clarification question.',
+		],
+		vocabulary:
+			'coherent explanation|一貫した説明;clarity check|明瞭さの確認;reframe|枠組みを変える',
+		phrases:
+			'Let me frame it from the user’s point of view.|利用者の視点から説明します。;Does that answer the main question?|主な質問への答えになっていますか？',
+		voiceTask:
+			'15～18分のExplanation Lab。一般ideaを説明し、audience変更、summary、誤解repair、unplanned questionsへ対応する。',
+		skillTargets: ['listening', 'speaking', 'interaction', 'fluency', 'grammar', 'vocabulary'],
+	},
+] as const satisfies readonly B2ChallengeLessonSeed[];
+
+export const UNIT_19_LESSONS = buildB2ChallengeUnit(301, 315, seeds);

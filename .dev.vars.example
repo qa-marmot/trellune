@@ -1,0 +1,2 @@
+# Copy to .dev.vars for local API development only. Never commit .dev.vars.
+ALLOW_LOCAL_AUTH=true

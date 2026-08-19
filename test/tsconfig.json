@@ -1,0 +1,6 @@
+{
+	"extends": "../tsconfig.json",
+	"compilerOptions": {},
+	"include": ["./**/*.ts", "../src/**/*.ts", "../src/**/*.tsx"],
+	"exclude": []
+}

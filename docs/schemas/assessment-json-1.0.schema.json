@@ -1,0 +1,465 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://schemas.example.com/trellune/assessment-json-1.0.schema.json",
+	"title": "Trellune ASSESSMENT_JSON 1.0 — Stage Assessment",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"schemaVersion",
+		"assessmentId",
+		"attemptId",
+		"assessmentType",
+		"stageId",
+		"curriculumRange",
+		"completedAt",
+		"result",
+		"scores",
+		"strengths",
+		"reinforcementTargets",
+		"evidence",
+		"nextTargets"
+	],
+	"properties": {
+		"schemaVersion": { "const": "1.0" },
+		"assessmentId": {
+			"enum": [
+				"english-os-stage-assessment-foundation-v1",
+				"english-os-stage-assessment-independent-v1",
+				"english-os-stage-assessment-fluency-v1",
+				"english-os-stage-assessment-graduation-v1",
+				"english-os-stage-assessment-graduation-integrated-v1",
+				"english-os-stage-assessment-graduation-integrated-v2"
+			]
+		},
+		"attemptId": {
+			"type": "string",
+			"format": "uuid",
+			"pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+		},
+		"assessmentType": { "const": "stage" },
+		"stageId": {
+			"enum": [
+				"english-os-core-stage-foundation-a1-a2",
+				"english-os-core-stage-independent-a2-b1-entry",
+				"english-os-core-stage-fluency-b1-b1-plus",
+				"english-os-core-stage-b2-challenge-b1-plus-b2"
+			]
+		},
+		"curriculumRange": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["startDay", "endDay"],
+			"properties": {
+				"startDay": { "type": "integer", "minimum": 1, "maximum": 365 },
+				"endDay": { "type": "integer", "minimum": 1, "maximum": 365 }
+			}
+		},
+		"completedAt": { "type": "string", "format": "date-time" },
+		"result": {
+			"enum": ["pass", "provisional", "reinforcement-recommended"]
+		},
+		"cefrEstimate": { "enum": ["B1+", "B2-entry", "B2"] },
+		"cefrEstimateScope": { "enum": ["spoken", "integrated"] },
+		"scores": {
+			"type": "object",
+			"additionalProperties": false,
+			"properties": {
+				"grammar": { "$ref": "#/$defs/skillScore" },
+				"vocabulary": { "$ref": "#/$defs/skillScore" },
+				"speaking": { "$ref": "#/$defs/skillScore" },
+				"fluency": { "$ref": "#/$defs/skillScore" },
+				"interaction": { "$ref": "#/$defs/skillScore" },
+				"listening": { "$ref": "#/$defs/skillScore" },
+				"pronunciation": { "$ref": "#/$defs/skillScore" },
+				"reading": { "$ref": "#/$defs/skillScore" },
+				"writing": { "$ref": "#/$defs/skillScore" }
+			}
+		},
+		"strengths": { "$ref": "#/$defs/textList" },
+		"reinforcementTargets": { "$ref": "#/$defs/textList" },
+		"evidence": {
+			"type": "array",
+			"maxItems": 20,
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["note"],
+				"properties": {
+					"skill": {
+						"enum": [
+							"grammar",
+							"vocabulary",
+							"speaking",
+							"fluency",
+							"interaction",
+							"listening",
+							"pronunciation",
+							"reading",
+							"writing"
+						]
+					},
+					"note": { "type": "string", "minLength": 1, "maxLength": 1000 }
+				}
+			}
+		},
+		"nextTargets": { "$ref": "#/$defs/textList" },
+		"notes": { "type": "string", "minLength": 1, "maxLength": 2000 }
+	},
+	"allOf": [
+		{
+			"if": {
+				"properties": {
+					"assessmentId": { "const": "english-os-stage-assessment-foundation-v1" }
+				},
+				"required": ["assessmentId"]
+			},
+			"then": {
+				"properties": {
+					"stageId": { "const": "english-os-core-stage-foundation-a1-a2" },
+					"curriculumRange": {
+						"type": "object",
+						"properties": { "startDay": { "const": 1 }, "endDay": { "const": 90 } }
+					},
+					"scores": {
+						"type": "object",
+						"properties": {
+							"grammar": true,
+							"vocabulary": true,
+							"speaking": true,
+							"interaction": true
+						},
+						"required": ["grammar", "vocabulary", "speaking", "interaction"]
+					}
+				}
+			}
+		},
+		{
+			"if": {
+				"properties": {
+					"assessmentId": { "const": "english-os-stage-assessment-graduation-integrated-v2" }
+				},
+				"required": ["assessmentId"]
+			},
+			"then": {
+				"required": ["cefrEstimate", "cefrEstimateScope"],
+				"properties": {
+					"cefrEstimate": { "enum": ["B1+", "B2-entry", "B2"] },
+					"cefrEstimateScope": { "const": "integrated" },
+					"stageId": { "const": "english-os-core-stage-b2-challenge-b1-plus-b2" },
+					"curriculumRange": {
+						"type": "object",
+						"properties": { "startDay": { "const": 271 }, "endDay": { "const": 365 } }
+					},
+					"scores": {
+						"type": "object",
+						"properties": {
+							"speaking": true,
+							"interaction": true,
+							"fluency": true,
+							"grammar": true,
+							"vocabulary": true,
+							"listening": true,
+							"reading": true,
+							"writing": true
+						},
+						"required": [
+							"speaking",
+							"interaction",
+							"fluency",
+							"grammar",
+							"vocabulary",
+							"listening",
+							"reading",
+							"writing"
+						]
+					}
+				},
+				"allOf": [
+					{
+						"if": {
+							"properties": { "cefrEstimate": { "const": "B2-entry" } },
+							"required": ["cefrEstimate"]
+						},
+						"then": { "$ref": "#/$defs/integratedScoresAtLeast3" }
+					},
+					{
+						"if": {
+							"properties": { "cefrEstimate": { "const": "B2" } },
+							"required": ["cefrEstimate"]
+						},
+						"then": {
+							"properties": { "result": { "const": "pass" } },
+							"allOf": [{ "$ref": "#/$defs/integratedScoresAtLeast4" }]
+						}
+					},
+					{ "$ref": "#/$defs/evidenceForEveryIntegratedSkill" }
+				]
+			}
+		},
+		{
+			"if": {
+				"properties": {
+					"assessmentId": { "const": "english-os-stage-assessment-independent-v1" }
+				},
+				"required": ["assessmentId"]
+			},
+			"then": {
+				"properties": {
+					"stageId": { "const": "english-os-core-stage-independent-a2-b1-entry" },
+					"curriculumRange": {
+						"type": "object",
+						"properties": { "startDay": { "const": 91 }, "endDay": { "const": 180 } }
+					},
+					"scores": {
+						"type": "object",
+						"properties": {
+							"grammar": true,
+							"vocabulary": true,
+							"speaking": true,
+							"interaction": true,
+							"listening": true,
+							"fluency": true
+						},
+						"required": ["grammar", "vocabulary", "speaking", "interaction", "listening", "fluency"]
+					}
+				}
+			}
+		},
+		{
+			"if": {
+				"properties": {
+					"assessmentId": { "const": "english-os-stage-assessment-fluency-v1" }
+				},
+				"required": ["assessmentId"]
+			},
+			"then": {
+				"properties": {
+					"stageId": { "const": "english-os-core-stage-fluency-b1-b1-plus" },
+					"curriculumRange": {
+						"type": "object",
+						"properties": { "startDay": { "const": 181 }, "endDay": { "const": 270 } }
+					},
+					"scores": {
+						"type": "object",
+						"properties": {
+							"speaking": true,
+							"interaction": true,
+							"fluency": true,
+							"grammar": true,
+							"vocabulary": true,
+							"listening": true
+						},
+						"required": ["speaking", "interaction", "fluency", "grammar", "vocabulary", "listening"]
+					}
+				}
+			}
+		},
+		{
+			"if": {
+				"properties": {
+					"assessmentId": { "const": "english-os-stage-assessment-graduation-v1" }
+				},
+				"required": ["assessmentId"]
+			},
+			"then": {
+				"required": ["cefrEstimate"],
+				"properties": {
+					"cefrEstimate": { "enum": ["B1+", "B2-entry", "B2"] },
+					"cefrEstimateScope": { "const": "spoken" },
+					"stageId": { "const": "english-os-core-stage-b2-challenge-b1-plus-b2" },
+					"curriculumRange": {
+						"type": "object",
+						"properties": { "startDay": { "const": 271 }, "endDay": { "const": 365 } }
+					},
+					"scores": {
+						"type": "object",
+						"properties": {
+							"speaking": true,
+							"interaction": true,
+							"fluency": true,
+							"grammar": true,
+							"vocabulary": true,
+							"listening": true
+						},
+						"required": ["speaking", "interaction", "fluency", "grammar", "vocabulary", "listening"]
+					}
+				}
+			}
+		},
+		{
+			"if": {
+				"properties": {
+					"assessmentId": { "const": "english-os-stage-assessment-graduation-integrated-v1" }
+				},
+				"required": ["assessmentId"]
+			},
+			"then": {
+				"required": ["cefrEstimate", "cefrEstimateScope"],
+				"properties": {
+					"cefrEstimate": { "enum": ["B1+", "B2-entry", "B2"] },
+					"cefrEstimateScope": { "const": "integrated" },
+					"stageId": { "const": "english-os-core-stage-b2-challenge-b1-plus-b2" },
+					"curriculumRange": {
+						"type": "object",
+						"properties": { "startDay": { "const": 271 }, "endDay": { "const": 365 } }
+					},
+					"scores": {
+						"type": "object",
+						"properties": {
+							"speaking": true,
+							"interaction": true,
+							"fluency": true,
+							"grammar": true,
+							"vocabulary": true,
+							"listening": true,
+							"reading": true,
+							"writing": true
+						},
+						"required": [
+							"speaking",
+							"interaction",
+							"fluency",
+							"grammar",
+							"vocabulary",
+							"listening",
+							"reading",
+							"writing"
+						]
+					}
+				}
+			}
+		},
+		{
+			"if": {
+				"properties": {
+					"assessmentId": {
+						"not": {
+							"enum": [
+								"english-os-stage-assessment-graduation-v1",
+								"english-os-stage-assessment-graduation-integrated-v1",
+								"english-os-stage-assessment-graduation-integrated-v2"
+							]
+						}
+					}
+				},
+				"required": ["assessmentId"]
+			},
+			"then": {
+				"allOf": [
+					{ "not": { "required": ["cefrEstimate"] } },
+					{ "not": { "required": ["cefrEstimateScope"] } }
+				]
+			}
+		}
+	],
+	"$defs": {
+		"skillScore": { "type": "integer", "minimum": 1, "maximum": 5 },
+		"integratedScoresAtLeast3": {
+			"type": "object",
+			"properties": {
+				"scores": {
+					"type": "object",
+					"properties": {
+						"speaking": { "type": "integer", "minimum": 3 },
+						"interaction": { "type": "integer", "minimum": 3 },
+						"fluency": { "type": "integer", "minimum": 3 },
+						"grammar": { "type": "integer", "minimum": 3 },
+						"vocabulary": { "type": "integer", "minimum": 3 },
+						"listening": { "type": "integer", "minimum": 3 },
+						"reading": { "type": "integer", "minimum": 3 },
+						"writing": { "type": "integer", "minimum": 3 }
+					}
+				}
+			}
+		},
+		"integratedScoresAtLeast4": {
+			"type": "object",
+			"properties": {
+				"scores": {
+					"type": "object",
+					"properties": {
+						"speaking": { "type": "integer", "minimum": 4 },
+						"interaction": { "type": "integer", "minimum": 4 },
+						"fluency": { "type": "integer", "minimum": 4 },
+						"grammar": { "type": "integer", "minimum": 4 },
+						"vocabulary": { "type": "integer", "minimum": 4 },
+						"listening": { "type": "integer", "minimum": 4 },
+						"reading": { "type": "integer", "minimum": 4 },
+						"writing": { "type": "integer", "minimum": 4 }
+					}
+				}
+			}
+		},
+		"evidenceForEveryIntegratedSkill": {
+			"type": "object",
+			"properties": {
+				"evidence": {
+					"type": "array",
+					"allOf": [
+						{
+							"contains": {
+								"type": "object",
+								"properties": { "skill": { "const": "speaking" } },
+								"required": ["skill"]
+							}
+						},
+						{
+							"contains": {
+								"type": "object",
+								"properties": { "skill": { "const": "interaction" } },
+								"required": ["skill"]
+							}
+						},
+						{
+							"contains": {
+								"type": "object",
+								"properties": { "skill": { "const": "fluency" } },
+								"required": ["skill"]
+							}
+						},
+						{
+							"contains": {
+								"type": "object",
+								"properties": { "skill": { "const": "grammar" } },
+								"required": ["skill"]
+							}
+						},
+						{
+							"contains": {
+								"type": "object",
+								"properties": { "skill": { "const": "vocabulary" } },
+								"required": ["skill"]
+							}
+						},
+						{
+							"contains": {
+								"type": "object",
+								"properties": { "skill": { "const": "listening" } },
+								"required": ["skill"]
+							}
+						},
+						{
+							"contains": {
+								"type": "object",
+								"properties": { "skill": { "const": "reading" } },
+								"required": ["skill"]
+							}
+						},
+						{
+							"contains": {
+								"type": "object",
+								"properties": { "skill": { "const": "writing" } },
+								"required": ["skill"]
+							}
+						}
+					]
+				}
+			}
+		},
+		"textList": {
+			"type": "array",
+			"maxItems": 5,
+			"items": { "type": "string", "minLength": 1, "maxLength": 500 }
+		}
+	}
+}
