@@ -3,6 +3,18 @@
 All notable changes are recorded here. Trellune follows semantic versioning
 when a release is made.
 
+## v1.8.0 — Japanese and English UI
+
+- Added a lightweight, type-safe Japanese/English UI locale layer
+- Added browser-language detection for fresh installs and Japanese-compatible
+  fallback for pre-i18n learners
+- Kept locale preference device-only, without a schema, sync, backup, or JSON
+  contract change
+- Added localized navigation, onboarding, learning, import, assessment, backup,
+  sync, and offline surfaces plus locale-aware document metadata
+- Documented the Japanese-first curriculum support boundary and locale
+  contribution workflow
+
 ## v1.7.0 — Initial public OSS release
 
 - Provider-neutral manual conversation-AI contract and capability presets

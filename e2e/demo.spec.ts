@@ -24,3 +24,21 @@ test('the synthetic local-only demo seeds, previews a fixture import, and resets
 	await expect(page).toHaveURL(/\/today$/u);
 	await expect(page.getByRole('heading', { name: 'はじめまして' })).toBeVisible();
 });
+
+test('the synthetic demo switches to English without changing its isolated data', async ({
+	page,
+}) => {
+	await page.goto('/today');
+	await page.getByLabel('表示言語').selectOption('en');
+	await expect(
+		page.getByText(
+			'Public demo: synthetic data only, sync disabled. Its storage is isolated from the regular app.',
+		),
+	).toBeVisible();
+	await expect(page.getByRole('heading', { name: "Today's Core" })).toBeVisible();
+	await page.getByRole('button', { name: 'Open a Reading/Writing example' }).click();
+	await expect(page.getByRole('heading', { name: 'Read, write, and reuse' })).toBeVisible();
+	await page.reload();
+	await expect(page.getByRole('heading', { name: 'Read, write, and reuse' })).toBeVisible();
+	await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+});

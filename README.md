@@ -53,6 +53,15 @@ flowchart LR
 resettable synthetic local data, has no sign-in, and does not connect to D1 or
 the optional sync service.
 
+## Language support
+
+Trellune’s product UI is available in **Japanese** and **English**. The display
+language is a per-device preference and never changes learner data, sync, or
+JSON contracts. The 365-day curriculum’s support explanations and Japanese
+glosses are still Japanese-first; Trellune does not claim a fully multilingual
+curriculum yet. [Localization](docs/LOCALIZATION.md) explains the support
+matrix and how to contribute another UI locale.
+
 ## Try it locally
 
 ```bash
@@ -104,6 +113,7 @@ optional Boost learning.
 pnpm prompts:check
 pnpm docs:check-links
 pnpm public:check
+pnpm i18n:check
 pnpm format:check
 pnpm lint
 pnpm typecheck
@@ -128,6 +138,7 @@ pnpm playwright test
 - [Public-release checklist](docs/PUBLIC_RELEASE_CHECKLIST.md)
 - [Provider acceptance pack](docs/provider-acceptance/README.md)
 - [Launch copy](docs/LAUNCH.md)
+- [Localization](docs/LOCALIZATION.md)
 
 ## License
 

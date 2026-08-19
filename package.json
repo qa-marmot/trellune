@@ -1,6 +1,6 @@
 {
 	"name": "trellune",
-	"version": "1.7.0",
+	"version": "1.8.0",
 	"private": true,
 	"license": "MIT",
 	"type": "module",
@@ -32,6 +32,8 @@
 		"public:export": "node scripts/export-public-snapshot.mjs",
 		"prompts:generate": "node scripts/generate-prompt-artifacts.mjs",
 		"prompts:check": "node scripts/generate-prompt-artifacts.mjs --check",
+		"i18n:check": "vitest run src/i18n/i18n.test.ts",
+		"verify:local": "pnpm prompts:check && pnpm public:check && pnpm docs:check-links && pnpm i18n:check && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm audit --prod && pnpm test:d1:local && pnpm test:pwa:update && pnpm playwright test && pnpm test:demo",
 		"playwright": "playwright",
 		"cf-typegen": "wrangler types",
 		"db:migrate:local": "wrangler d1 migrations apply english-os-local --local",

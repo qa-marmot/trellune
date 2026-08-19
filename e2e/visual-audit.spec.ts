@@ -234,6 +234,7 @@ async function inspectLayout(
 		const candidates: ElementCandidate[] = [];
 		const elements = [...document.querySelectorAll('*')];
 		for (const element of elements) {
+			if (element.classList.contains('sr-only')) continue;
 			const rect = element.getBoundingClientRect();
 			if (!visible(element, rect)) continue;
 			const style = getComputedStyle(element);
@@ -551,7 +552,7 @@ test('captures empty, error, conflict, offline, restore, focus and Boost states'
 	await navigateForAudit(page, '/backup');
 	await waitForStablePage(page);
 	const downloadPending = page.waitForEvent('download');
-	await page.getByRole('button', { name: 'JSONを保存' }).click();
+	await page.getByRole('button', { name: 'バックアップを書き出す' }).click();
 	const download = await downloadPending;
 	const downloadPath = await download.path();
 	if (!downloadPath) throw new Error('Backup download did not have a local path');

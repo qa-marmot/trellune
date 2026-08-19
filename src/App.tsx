@@ -64,6 +64,7 @@ import {
 	type BackupPreview,
 } from './storage/backup';
 import { type AppData, useAppState } from './state/AppState';
+import { localizeUiMessage, useLocale } from './i18n';
 
 type CoreDisplayStep = keyof AppData['core'];
 
@@ -79,33 +80,32 @@ const OnboardingSetupSchema = z
 		startDate: z.iso.date(),
 	})
 	.strict();
-const LOCAL_DELETE_CONFIRMATION = '端末データを削除';
-
 const coreSteps: Array<{
 	key: CoreDisplayStep;
-	title: string;
-	detail: string;
+	titleKey: 'core.reviews' | 'core.grammar' | 'core.conversationImport';
+	detail: (locale: 'ja' | 'en') => string;
 	to: string;
 	tone: string;
 }> = [
 	{
 		key: 'reviews',
-		title: '期限が来た復習',
-		detail: '7枚 · 約5分',
+		titleKey: 'core.reviews',
+		detail: (locale) => (locale === 'ja' ? '7枚 · 約5分' : '7 cards · about 5 min'),
 		to: '/reviews',
 		tone: 'cyan',
 	},
 	{
 		key: 'grammar',
-		title: '今日の文法',
-		detail: 'be動詞で自己紹介',
+		titleKey: 'core.grammar',
+		detail: (locale) => (locale === 'ja' ? 'be動詞で自己紹介' : 'Introduce yourself with be'),
 		to: '/grammar',
 		tone: 'pear',
 	},
 	{
 		key: 'import',
-		title: 'Core会話と結果取込',
-		detail: '話した結果JSONを取り込む',
+		titleKey: 'core.conversationImport',
+		detail: (locale) =>
+			locale === 'ja' ? '話した結果JSONを取り込む' : 'Import your conversation result JSON',
 		to: '/voice',
 		tone: 'lavender',
 	},
@@ -118,6 +118,7 @@ function RequireOnboarding({ children }: { children: React.ReactNode }) {
 
 function Onboarding() {
 	const { data, operationError, update } = useAppState();
+	const { locale, setLocale, t } = useLocale();
 	const navigate = useNavigate();
 	const [name, setName] = useState(data.learnerName);
 	const [minutes, setMinutes] = useState(data.dailyMinutes);
@@ -130,18 +131,28 @@ function Onboarding() {
 	return (
 		<main className="onboarding-shell">
 			<div className="onboarding-copy reveal">
+				<label className="onboarding-locale-select">
+					<span>{t('language.label')}</span>
+					<select
+						value={locale}
+						onChange={(event) => setLocale(event.target.value as typeof locale)}
+					>
+						<option value="ja">{t('language.ja')}</option>
+						<option value="en">{t('language.en')}</option>
+					</select>
+				</label>
 				<span className="wordmark wordmark--standalone">
 					<span className="wordmark__mark">TL</span>Trellune
 				</span>
-				<h1 tabIndex={-1}>話す日を、365日つづける。</h1>
-				<p>毎日のCoreはひとつの画面に。FoundationからB2 Challengeへ、安全に積み上げます。</p>
-				<ul className="onboarding-facts" aria-label="保存と連携について">
-					<li>個人用・ローカル優先で、同期はあとから任意で選べます。</li>
-					<li>音声と、貼り付けたJSONの原文は保存しません。</li>
-					<li>会話AI連携は手動コピー＆ペーストだけで、外部AI APIを使いません。</li>
-					<li>一度開いた主要画面と学習データはオフラインでも利用できます。</li>
+				<h1 tabIndex={-1}>{t('onboarding.heading')}</h1>
+				<p>{t('onboarding.description')}</p>
+				<ul className="onboarding-facts" aria-label={t('onboarding.factsLabel')}>
+					<li>{t('onboarding.fact.local')}</li>
+					<li>{t('onboarding.fact.privacy')}</li>
+					<li>{t('onboarding.fact.ai')}</li>
+					<li>{t('onboarding.fact.offline')}</li>
 				</ul>
-				<div className="onboarding-track" aria-label="365日の構成">
+				<div className="onboarding-track" aria-label={t('onboarding.trackLabel')}>
 					<span>
 						1–90
 						<br />
@@ -180,11 +191,17 @@ function Onboarding() {
 							const field = String(issue.path[0] ?? 'form');
 							if (!nextErrors[field]) {
 								nextErrors[field] =
-									field === 'timeZone'
-										? '有効なIANAタイムゾーンを入力してください。'
-										: field === 'startDate'
-											? '開始日を入力してください。'
-											: issue.message;
+									field === 'learnerName'
+										? locale === 'ja'
+											? '呼ばれたい名前を入力してください。'
+											: 'Enter a name to use in the app.'
+										: field === 'timeZone'
+											? locale === 'ja'
+												? '有効なIANAタイムゾーンを入力してください。'
+												: 'Enter a valid IANA time zone.'
+											: locale === 'ja'
+												? '開始日を入力してください。'
+												: 'Choose a start date.';
 							}
 						}
 						setErrors(nextErrors);
@@ -195,21 +212,21 @@ function Onboarding() {
 					if (result.ok) navigate('/baseline');
 				}}
 			>
-				<h2>最初の設定</h2>
+				<h2>{t('onboarding.setup')}</h2>
 				<label className="field">
-					<span>呼ばれたい名前</span>
+					<span>{t('onboarding.name')}</span>
 					<input
 						value={name}
 						onChange={(event) => {
 							setName(event.target.value);
 							setErrors((current) => ({ ...current, learnerName: '' }));
 						}}
-						placeholder="例: Yabu"
+						placeholder={locale === 'ja' ? '例: Yabu' : 'For example: Alex'}
 						autoComplete="name"
 						aria-invalid={Boolean(errors.learnerName)}
 						aria-describedby="learner-name-help learner-name-error"
 					/>
-					<small id="learner-name-help">アプリ内だけに保存します。</small>
+					<small id="learner-name-help">{t('onboarding.nameHelp')}</small>
 					{errors.learnerName ? (
 						<small id="learner-name-error" className="field-error">
 							{errors.learnerName}
@@ -217,7 +234,7 @@ function Onboarding() {
 					) : null}
 				</label>
 				<fieldset className="choice-group">
-					<legend>毎日の目安</legend>
+					<legend>{t('onboarding.minutes')}</legend>
 					{[10, 20, 30].map((value) => (
 						<label key={value} className={minutes === value ? 'choice is-selected' : 'choice'}>
 							<input
@@ -227,12 +244,12 @@ function Onboarding() {
 								checked={minutes === value}
 								onChange={() => setMinutes(value)}
 							/>
-							<span>{value}分</span>
+							<span>{locale === 'ja' ? `${value}分` : `${value} min`}</span>
 						</label>
 					))}
 				</fieldset>
 				<label className="field">
-					<span>学習タイムゾーン（IANA）</span>
+					<span>{t('onboarding.timezone')}</span>
 					<input
 						value={timeZone}
 						onChange={(event) => {
@@ -250,7 +267,7 @@ function Onboarding() {
 						<option value="Europe/London" />
 						<option value="Australia/Sydney" />
 					</datalist>
-					<small id="time-zone-help">日付境界と復習時刻の計算に使います。</small>
+					<small id="time-zone-help">{t('onboarding.timezoneHelp')}</small>
 					{errors.timeZone ? (
 						<small id="time-zone-error" className="field-error">
 							{errors.timeZone}
@@ -258,7 +275,7 @@ function Onboarding() {
 					) : null}
 				</label>
 				<label className="field">
-					<span>Day 1を始める日</span>
+					<span>{t('onboarding.startDate')}</span>
 					<input
 						type="date"
 						value={startDate}
@@ -270,7 +287,7 @@ function Onboarding() {
 						aria-invalid={Boolean(errors.startDate)}
 						aria-describedby="start-date-help start-date-error"
 					/>
-					<small id="start-date-help">開始日前は学習記録を作りません。</small>
+					<small id="start-date-help">{t('onboarding.startDateHelp')}</small>
 					{errors.startDate ? (
 						<small id="start-date-error" className="field-error">
 							{errors.startDate}
@@ -278,15 +295,17 @@ function Onboarding() {
 					) : null}
 				</label>
 				<button className="button button--primary" type="submit">
-					ベースラインへ
+					{t('onboarding.start')}
 					<Icon name="arrow" />
 				</button>
 				<p className="form-note">
-					アカウント作成はありません。学習データはこの端末から始まります。
+					{locale === 'ja'
+						? 'アカウント作成はありません。学習データはこの端末から始まります。'
+						: 'No account is created. Learning data starts on this device.'}
 				</p>
 				{operationError ? (
 					<p className="feedback is-error" role="alert">
-						{operationError}
+						{localizeUiMessage(operationError, locale)}
 					</p>
 				) : null}
 			</form>
@@ -297,6 +316,7 @@ function Onboarding() {
 function Baseline() {
 	const navigate = useNavigate();
 	const { recordBaseline, setEditorDirty } = useAppState();
+	const { formatNumber, locale, t } = useLocale();
 	const [source, setSource] = useState('');
 	const [result, setResult] = useState<ReturnType<typeof parseBaselineAssessment> | null>(null);
 	const [message, setMessage] = useState('');
@@ -325,20 +345,28 @@ function Baseline() {
 	return (
 		<AppShell>
 			<PageHeader
-				title="話し始める前の記録"
-				description="今の自分を測るだけ。点数でコースを短くしたり長くしたりはしません。"
+				title={locale === 'ja' ? '話し始める前の記録' : 'A record before you begin speaking'}
+				description={
+					locale === 'ja'
+						? '今の自分を測るだけ。点数でコースを短くしたり長くしたりはしません。'
+						: 'This simply records where you are now. Scores never make the course shorter or longer.'
+				}
 			/>
 			<section className="split-panel">
 				<div className="surface surface--cyan">
-					<h2>会話AIで8分話す</h2>
+					<h2>{locale === 'ja' ? '会話AIで8分話す' : 'Talk with Conversation AI for 8 minutes'}</h2>
 					<ol className="plain-steps">
-						<li>自己紹介</li>
-						<li>昨日したこと</li>
-						<li>来週したいこと</li>
-						<li>分からない時の聞き返し</li>
+						<li>{locale === 'ja' ? '自己紹介' : 'Introduce yourself'}</li>
+						<li>{locale === 'ja' ? '昨日したこと' : 'Talk about yesterday'}</li>
+						<li>{locale === 'ja' ? '来週したいこと' : 'Say what you want to do next week'}</li>
+						<li>
+							{locale === 'ja'
+								? '分からない時の聞き返し'
+								: 'Ask for clarification when you do not understand'}
+						</li>
 					</ol>
 					<button className="button" type="button" onClick={() => navigate('/voice?mode=baseline')}>
-						ベースライン用プロンプト
+						{locale === 'ja' ? 'ベースライン用プロンプト' : 'Baseline prompt'}
 					</button>
 				</div>
 				<form
@@ -348,10 +376,22 @@ function Baseline() {
 						validate();
 					}}
 				>
-					<h2>評価JSONを確認して取り込む</h2>
-					<p>Voice終了後に表示されたベースラインJSONを貼り付けます。SESSION_JSONとは別です。</p>
+					<h2>
+						{locale === 'ja'
+							? '評価JSONを確認して取り込む'
+							: 'Validate and import the assessment JSON'}
+					</h2>
+					<p>
+						{locale === 'ja'
+							? 'Voice終了後に表示されたベースラインJSONを貼り付けます。SESSION_JSONとは別です。'
+							: 'Paste the baseline JSON shown after Voice. It is separate from SESSION_JSON.'}
+					</p>
 					<label className="field" htmlFor="baseline-json">
-						<span>会話AIが返したベースラインJSON</span>
+						<span>
+							{locale === 'ja'
+								? '会話AIが返したベースラインJSON'
+								: 'Baseline JSON returned by your Conversation AI'}
+						</span>
 						<textarea
 							id="baseline-json"
 							value={source}
@@ -364,30 +404,39 @@ function Baseline() {
 							aria-describedby="baseline-limit baseline-feedback"
 						/>
 						<small id="baseline-limit">
-							入力上限 1MB（現在 {byteLength.toLocaleString('ja-JP')} /{' '}
-							{MAX_SESSION_SOURCE_BYTES.toLocaleString('ja-JP')} bytes）
+							{locale === 'ja' ? '入力上限 1MB（現在 ' : 'Input limit 1 MB (currently '}
+							{formatNumber(byteLength)} / {formatNumber(MAX_SESSION_SOURCE_BYTES)} bytes
+							{locale === 'ja' ? '）' : ')'}
 						</small>
 					</label>
 					<button className="button button--primary" type="submit">
-						検証してプレビュー
+						{t('assessment.preview')}
 					</button>
 					<div id="baseline-feedback" aria-live="polite">
 						{result?.errors.length ? (
 							<div className="error-box" role="alert">
-								<strong>保存できません</strong>
+								<strong>{t('error.cannotSave')}</strong>
 								<ul>
 									{result.errors.map((error) => (
-										<li key={error}>{error}</li>
+										<li key={error}>{localizeUiMessage(error, locale)}</li>
 									))}
 								</ul>
 							</div>
 						) : result?.assessment ? (
 							<div className="preview-data">
-								<p>5観点と自己評価を確認しました。保存前は端末データを変更していません。</p>
+								<p>
+									{locale === 'ja'
+										? '5観点と自己評価を確認しました。保存前は端末データを変更していません。'
+										: 'Five measures and self-confidence are ready to review. Nothing has changed on this device yet.'}
+								</p>
 								<dl>
-									<dt>自信</dt>
+									<dt>{locale === 'ja' ? '自信' : 'Confidence'}</dt>
 									<dd>{result.assessment.confidence}/5</dd>
-									<dt>課題達成 / 文法 / 語彙 / 流暢さ / やり取り</dt>
+									<dt>
+										{locale === 'ja'
+											? '課題達成 / 文法 / 語彙 / 流暢さ / やり取り'
+											: 'Task completion / grammar / vocabulary / fluency / interaction'}
+									</dt>
 									<dd>
 										{result.assessment.taskCompletion} / {result.assessment.grammar} /{' '}
 										{result.assessment.vocabulary} / {result.assessment.fluency} /{' '}
@@ -399,20 +448,20 @@ function Baseline() {
 									type="button"
 									onClick={() => void save()}
 								>
-									評価を保存してDay 1へ
+									{locale === 'ja' ? '評価を保存してDay 1へ' : 'Save assessment and go to Day 1'}
 								</button>
 							</div>
 						) : null}
 					</div>
 					<button className="button" type="button" onClick={() => navigate('/today')}>
-						Day 1を始める（今回はスキップ）
+						{locale === 'ja' ? 'Day 1を始める（今回はスキップ）' : 'Start Day 1 (skip for now)'}
 					</button>
 					{message ? (
 						<p
 							className={`feedback${messageIsError ? ' is-error' : ' is-success'}`}
 							role={messageIsError ? 'alert' : 'status'}
 						>
-							{message}
+							{localizeUiMessage(message, locale)}
 						</p>
 					) : null}
 				</form>
@@ -421,7 +470,7 @@ function Baseline() {
 	);
 }
 
-const assessmentSkillLabels: Record<AssessmentSkill, string> = {
+const assessmentSkillLabelsJa: Record<AssessmentSkill, string> = {
 	grammar: '文法',
 	vocabulary: '語彙',
 	speaking: '発話',
@@ -433,14 +482,43 @@ const assessmentSkillLabels: Record<AssessmentSkill, string> = {
 	writing: '作文',
 };
 
+const assessmentSkillLabelsEn: Record<AssessmentSkill, string> = {
+	grammar: 'Grammar',
+	vocabulary: 'Vocabulary',
+	speaking: 'Speaking',
+	fluency: 'Fluency',
+	interaction: 'Interaction',
+	listening: 'Listening',
+	pronunciation: 'Pronunciation',
+	reading: 'Reading',
+	writing: 'Writing',
+};
+
+function assessmentSkillLabel(skill: AssessmentSkill, locale: 'ja' | 'en'): string {
+	return (locale === 'ja' ? assessmentSkillLabelsJa : assessmentSkillLabelsEn)[skill];
+}
+
 const assessmentResultLabels = {
 	pass: 'Pass',
 	provisional: '暫定評価',
 	'reinforcement-recommended': '補強を推奨',
 } as const;
 
+function assessmentResultLabel(
+	result: keyof typeof assessmentResultLabels,
+	locale: 'ja' | 'en',
+): string {
+	if (locale === 'ja') return assessmentResultLabels[result];
+	return result === 'pass'
+		? 'Pass'
+		: result === 'provisional'
+			? 'Provisional'
+			: 'Reinforcement recommended';
+}
+
 function StageAssessmentPage() {
 	const { data, recordStageAssessment, setEditorDirty } = useAppState();
+	const { formatDateTime, formatNumber, locale, t } = useLocale();
 	const availableDefinitions = STAGE_ASSESSMENT_DEFINITIONS.filter(
 		(definition) =>
 			definition === FOUNDATION_STAGE_ASSESSMENT ||
@@ -520,8 +598,12 @@ function StageAssessmentPage() {
 	return (
 		<AppShell>
 			<PageHeader
-				title="Stage Assessment"
-				description="Stageごとのtask evidenceを保存します。Graduationは8技能を統合して推定し、正式なCEFR認定やCoreのlockには使いません。"
+				title={t('assessment.title')}
+				description={
+					locale === 'ja'
+						? 'Stageごとのtask evidenceを保存します。Graduationは8技能を統合して推定し、正式なCEFR認定やCoreのlockには使いません。'
+						: 'Save task evidence for each stage. Graduation combines evidence across eight skills; it is neither formal CEFR certification nor a Core lock.'
+				}
 			/>
 			{availableDefinitions.length > 1 ? (
 				<div className="phase-tabs" role="tablist" aria-label="Assessment Stage">
@@ -552,16 +634,22 @@ function StageAssessmentPage() {
 				</p>
 				<h2>{definition.title}</h2>
 				<p>
-					評価対象:{' '}
-					{definition.requiredSkills.map((skill) => assessmentSkillLabels[skill]).join('・')}
+					{locale === 'ja' ? '評価対象' : 'Skills assessed'}:{' '}
+					{definition.requiredSkills
+						.map((skill) => assessmentSkillLabel(skill, locale))
+						.join(locale === 'ja' ? '・' : ' · ')}
 				</p>
 				{definition.skillRubrics ? (
 					<details className="assessment-rubric">
-						<summary>1–5 rubricとCEFR推定条件を確認</summary>
+						<summary>
+							{locale === 'ja'
+								? '1–5 rubricとCEFR推定条件を確認'
+								: 'Review the 1–5 rubric and CEFR estimate conditions'}
+						</summary>
 						<div className="assessment-rubric__content">
 							{definition.requiredSkills.map((skill) => (
 								<section key={skill}>
-									<h3>{assessmentSkillLabels[skill]}</h3>
+									<h3>{assessmentSkillLabel(skill, locale)}</h3>
 									<ol>
 										{definition.skillRubrics?.[skill]?.map((descriptor, index) => (
 											<li key={descriptor}>
@@ -573,11 +661,11 @@ function StageAssessmentPage() {
 							))}
 							{definition.cefrEstimateGuardrails ? (
 								<div className="assessment-guardrail">
-									<strong>Profile guardrail</strong>
+									<strong>{locale === 'ja' ? 'Profile guardrail' : 'Profile guardrail'}</strong>
 									<p>
-										B2-entryは全skill {definition.cefrEstimateGuardrails.b2EntryMinimumScore}
-										/5以上、B2はpassかつ全skill {definition.cefrEstimateGuardrails.b2MinimumScore}
-										/5以上が必要です。平均点で弱いskillを隠しません。
+										{locale === 'ja'
+											? `B2-entryは全skill ${definition.cefrEstimateGuardrails.b2EntryMinimumScore}/5以上、B2はpassかつ全skill ${definition.cefrEstimateGuardrails.b2MinimumScore}/5以上が必要です。平均点で弱いskillを隠しません。`
+											: `B2-entry requires every skill at ${definition.cefrEstimateGuardrails.b2EntryMinimumScore}/5 or above. B2 requires a pass and every skill at ${definition.cefrEstimateGuardrails.b2MinimumScore}/5 or above; an average cannot hide a weak skill.`}
 									</p>
 								</div>
 							) : null}
@@ -586,13 +674,15 @@ function StageAssessmentPage() {
 				) : null}
 				{definition.cefrEstimateScope === 'spoken' ? (
 					<p>
-						このAssessmentのCEFR推定は会話・Listening中心です。Reading/Writingを含むfull
-						CEFRの認定・保証には使用しません。
+						{locale === 'ja'
+							? 'このAssessmentのCEFR推定は会話・Listening中心です。Reading/Writingを含むfull CEFRの認定・保証には使用しません。'
+							: 'This CEFR estimate is centred on conversation and listening. It is not evidence for, or a guarantee of, full CEFR attainment including Reading and Writing.'}
 					</p>
 				) : definition.cefrEstimateScope === 'integrated' ? (
 					<p>
-						Reading・Writing・Listening・会話のtask
-						evidenceを統合して推定します。日数やpassだけでは判定せず、正式なCEFR認定でもありません。
+						{locale === 'ja'
+							? 'Reading・Writing・Listening・会話のtask evidenceを統合して推定します。日数やpassだけでは判定せず、正式なCEFR認定でもありません。'
+							: 'This combines task evidence for Reading, Writing, Listening, and conversation. It is not determined by days or a pass alone, and it is not formal CEFR certification.'}
 					</p>
 				) : null}
 				<button
@@ -603,26 +693,37 @@ function StageAssessmentPage() {
 						setCopyStatus('idle');
 					}}
 				>
-					{attemptId ? '新しいAssessmentを開始' : 'Assessmentを開始'}
+					{attemptId
+						? locale === 'ja'
+							? '新しいAssessmentを開始'
+							: 'Start a new assessment'
+						: locale === 'ja'
+							? 'Assessmentを開始'
+							: 'Start assessment'}
 				</button>
 			</section>
 			{prompt ? (
 				<section className="prompt-panel">
 					<div className="prompt-panel__head">
 						<div>
-							<span>コピー専用</span>
+							<span>{t('voice.copyOnly')}</span>
 							<h2>Stage Assessment prompt</h2>
 						</div>
 						<button className="button" type="button" onClick={() => void copyPrompt()}>
-							<Icon name="copy" /> {copyStatus === 'copied' ? 'コピー済み' : 'コピー'}
+							<Icon name="copy" />{' '}
+							{copyStatus === 'copied' ? t('voice.copied') : t('assessment.copyPrompt')}
 						</button>
 					</div>
 					<pre>{prompt}</pre>
 					<p>
-						先にこのテキストを送信し、その後Voiceを開始します。終了後にASSESSMENT_JSONを明示的に依頼してください。
+						{locale === 'ja'
+							? '先にこのテキストを送信し、その後Voiceを開始します。終了後にASSESSMENT_JSONを明示的に依頼してください。'
+							: 'Send this text first, then start Voice. Afterward, explicitly request ASSESSMENT_JSON.'}
 					</p>
 					{copyStatus === 'failed' ? (
-						<p className="feedback is-error">コピーできませんでした。</p>
+						<p className="feedback is-error">
+							{locale === 'ja' ? 'コピーできませんでした。' : 'Could not copy.'}
+						</p>
 					) : null}
 				</section>
 			) : null}
@@ -633,9 +734,13 @@ function StageAssessmentPage() {
 					validate();
 				}}
 			>
-				<h2>ASSESSMENT_JSONを確認して取り込む</h2>
+				<h2>
+					{locale === 'ja'
+						? 'ASSESSMENT_JSONを確認して取り込む'
+						: 'Validate and import ASSESSMENT_JSON'}
+				</h2>
 				<label className="field" htmlFor="assessment-json">
-					<span>会話AIが返したASSESSMENT_JSON</span>
+					<span>{t('assessment.resultJson')}</span>
 					<textarea
 						id="assessment-json"
 						value={source}
@@ -648,58 +753,73 @@ function StageAssessmentPage() {
 						aria-describedby="assessment-limit assessment-feedback"
 					/>
 					<small id="assessment-limit">
-						入力上限 1MB（現在 {byteLength.toLocaleString('ja-JP')} /{' '}
-						{MAX_ASSESSMENT_SOURCE_BYTES.toLocaleString('ja-JP')} bytes）
+						{locale === 'ja' ? '入力上限 1MB（現在 ' : 'Input limit 1 MB (currently '}
+						{formatNumber(byteLength)} / {formatNumber(MAX_ASSESSMENT_SOURCE_BYTES)} bytes
+						{locale === 'ja' ? '）' : ')'}
 					</small>
 				</label>
 				<button className="button button--primary" type="submit">
-					検証してプレビュー
+					{t('assessment.preview')}
 				</button>
 				<div id="assessment-feedback" aria-live="polite">
 					{result?.warnings.map((warning) => (
-						<p key={warning}>{warning}</p>
+						<p key={warning}>{localizeUiMessage(warning, locale)}</p>
 					))}
 					{result?.errors.length ? (
 						<div className="error-box" role="alert">
-							<strong>保存できません</strong>
+							<strong>{t('error.cannotSave')}</strong>
 							<ul>
 								{result.errors.map((error) => (
-									<li key={error}>{error}</li>
+									<li key={error}>{localizeUiMessage(error, locale)}</li>
 								))}
 							</ul>
 						</div>
 					) : result?.assessment ? (
 						<div className="preview-data">
 							<dl>
-								<dt>結果</dt>
-								<dd>{assessmentResultLabels[result.assessment.result]}</dd>
+								<dt>{t('assessment.result')}</dt>
+								<dd>{assessmentResultLabel(result.assessment.result, locale)}</dd>
 								{result.assessment.cefrEstimate ? (
 									<>
 										<dt>
 											{result.assessment.cefrEstimateScope === 'integrated'
-												? '統合8技能CEFR推定（認定ではありません）'
-												: '会話・Listening中心の推定（full CEFR認定ではありません）'}
+												? locale === 'ja'
+													? '統合8技能CEFR推定（認定ではありません）'
+													: 'Integrated eight-skill CEFR estimate (not a certification)'
+												: locale === 'ja'
+													? '会話・Listening中心の推定（full CEFR認定ではありません）'
+													: 'Conversation and listening estimate (not a full CEFR certification)'}
 										</dt>
 										<dd>{result.assessment.cefrEstimate}</dd>
 									</>
 								) : null}
-								<dt>評価されたskills</dt>
+								<dt>{t('assessment.skills')}</dt>
 								<dd>
 									{(Object.entries(result.assessment.scores) as Array<[AssessmentSkill, number]>)
-										.map(([skill, score]) => `${assessmentSkillLabels[skill]} ${score}/5`)
+										.map(([skill, score]) => `${assessmentSkillLabel(skill, locale)} ${score}/5`)
 										.join(' · ')}
 								</dd>
-								<dt>Strengths</dt>
-								<dd>{result.assessment.strengths.join(' / ') || 'なし'}</dd>
-								<dt>Reinforcement targets</dt>
-								<dd>{result.assessment.reinforcementTargets.join(' / ') || 'なし'}</dd>
-								<dt>Evidence</dt>
-								<dd>{result.assessment.evidence.map((item) => item.note).join(' / ') || 'なし'}</dd>
-								<dt>Next targets</dt>
-								<dd>{result.assessment.nextTargets.join(' / ') || 'なし'}</dd>
+								<dt>{t('assessment.strengths')}</dt>
+								<dd>
+									{result.assessment.strengths.join(' / ') || (locale === 'ja' ? 'なし' : 'None')}
+								</dd>
+								<dt>{t('assessment.targets')}</dt>
+								<dd>
+									{result.assessment.reinforcementTargets.join(' / ') ||
+										(locale === 'ja' ? 'なし' : 'None')}
+								</dd>
+								<dt>{t('assessment.evidence')}</dt>
+								<dd>
+									{result.assessment.evidence.map((item) => item.note).join(' / ') ||
+										(locale === 'ja' ? 'なし' : 'None')}
+								</dd>
+								<dt>{t('assessment.nextTargets')}</dt>
+								<dd>
+									{result.assessment.nextTargets.join(' / ') || (locale === 'ja' ? 'なし' : 'None')}
+								</dd>
 							</dl>
 							<button className="button button--primary" type="button" onClick={() => void save()}>
-								Assessmentを保存
+								{t('assessment.save')}
 							</button>
 						</div>
 					) : null}
@@ -709,38 +829,45 @@ function StageAssessmentPage() {
 						className={`feedback${messageIsError ? ' is-error' : ' is-success'}`}
 						role={messageIsError ? 'alert' : 'status'}
 					>
-						{message}
+						{localizeUiMessage(message, locale)}
 					</p>
 				) : null}
 			</form>
 			<section className="session-list" aria-labelledby="assessment-history-title">
-				<h2 id="assessment-history-title">Attempt history</h2>
+				<h2 id="assessment-history-title">{t('assessment.history')}</h2>
 				{data.stageAssessments.length ? (
 					data.stageAssessments.map((assessment) => (
 						<article key={assessment.attemptId}>
 							<div>
-								<strong>{assessmentResultLabels[assessment.result]}</strong>
+								<strong>{assessmentResultLabel(assessment.result, locale)}</strong>
 								{assessment.cefrEstimate ? (
 									<span>
 										{assessment.cefrEstimateScope === 'integrated'
-											? '統合8技能CEFR推定'
-											: '会話・Listening中心の推定'}{' '}
-										{assessment.cefrEstimate}（認定ではありません）
+											? locale === 'ja'
+												? '統合8技能CEFR推定'
+												: 'Integrated eight-skill CEFR estimate'
+											: locale === 'ja'
+												? '会話・Listening中心の推定'
+												: 'Conversation and listening estimate'}{' '}
+										{assessment.cefrEstimate}
+										{locale === 'ja' ? '（認定ではありません）' : ' (not a certification)'}
 									</span>
 								) : null}
 								<p>
-									{new Date(assessment.completedAt).toLocaleString('ja-JP')} ·{' '}
+									{formatDateTime(assessment.completedAt)} ·{' '}
 									{Object.keys(assessment.scores)
-										.map((skill) => assessmentSkillLabels[skill as AssessmentSkill])
+										.map((skill) => assessmentSkillLabel(skill as AssessmentSkill, locale))
 										.join('・')}
 								</p>
 							</div>
-							<strong>{assessment.strengths.join(' / ') || '記録済み'}</strong>
+							<strong>
+								{assessment.strengths.join(' / ') || (locale === 'ja' ? '記録済み' : 'Recorded')}
+							</strong>
 						</article>
 					))
 				) : (
 					<div className="empty-state">
-						<p>保存済みのStage Assessmentはありません。</p>
+						<p>{t('assessment.noHistory')}</p>
 					</div>
 				)}
 			</section>
@@ -750,6 +877,7 @@ function StageAssessmentPage() {
 
 function Today() {
 	const { data } = useAppState();
+	const { locale, t } = useLocale();
 	const navigate = useNavigate();
 	const current = CURRICULUM[data.currentDay - 1] ?? CURRICULUM[0];
 	const currentLesson = CURRICULUM_MANIFEST.lessons[data.currentDay - 1];
@@ -765,8 +893,10 @@ function Today() {
 		return (
 			<AppShell>
 				<PageHeader
-					title="開始日を待っています"
-					description={`Day 1は${data.startDate ?? '設定した日'}から始まります。設定画面で変更できます。`}
+					title={t('today.beforeStart')}
+					description={t('today.beforeStartDescription', {
+						date: data.startDate ?? t('settings.title'),
+					})}
 				/>
 			</AppShell>
 		);
@@ -776,12 +906,12 @@ function Today() {
 		return (
 			<AppShell>
 				<PageHeader
-					title={`${AVAILABLE_CURRICULUM_TOTAL_DAYS}日間を修了しました`}
-					description={`新しいCore日は作成しません。履歴・ライブラリ・分析は引き続き確認できます。Day ${AVAILABLE_CURRICULUM_TOTAL_DAYS}を今日完了した場合は、その日のBoostだけ利用できます。`}
+					title={t('today.graduated', { days: AVAILABLE_CURRICULUM_TOTAL_DAYS })}
+					description={t('today.graduatedDescription')}
 				/>
 				{canBoostToday ? (
 					<button className="button button--dark" type="button" onClick={() => navigate('/boost')}>
-						Day {AVAILABLE_CURRICULUM_TOTAL_DAYS}のBoostを選ぶ
+						{t('today.chooseFinalBoost', { days: AVAILABLE_CURRICULUM_TOTAL_DAYS })}
 					</button>
 				) : null}
 			</AppShell>
@@ -800,10 +930,12 @@ function Today() {
 						<span>
 							<Icon name="clock" />
 							{currentStage && currentStage.startDay > 90
-								? `Core ${minuteRange(currentStage.timeGuidance.minimumCoreMinutes)}分 · 推奨${minuteRange(currentStage.timeGuidance.recommendedMinutes)}分`
-								: `約${data.dailyMinutes}分`}
+								? locale === 'ja'
+									? `Core ${minuteRange(currentStage.timeGuidance.minimumCoreMinutes)}分 · 推奨 ${minuteRange(currentStage.timeGuidance.recommendedMinutes)}分`
+									: `Core ${minuteRange(currentStage.timeGuidance.minimumCoreMinutes)} min · Recommended ${minuteRange(currentStage.timeGuidance.recommendedMinutes)} min`
+								: t('today.minutes', { count: data.dailyMinutes })}
 						</span>
-						<span>{data.streak}日連続</span>
+						<span>{t('today.streak', { count: data.streak })}</span>
 					</div>
 					{nextCoreStep ? (
 						<button
@@ -811,7 +943,7 @@ function Today() {
 							type="button"
 							onClick={() => navigate(nextCoreStep.to)}
 						>
-							次へ · {nextCoreStep.title}
+							{t('today.next')} · {t(nextCoreStep.titleKey)}
 						</button>
 					) : null}
 				</div>
@@ -820,8 +952,8 @@ function Today() {
 			<section className="core-section">
 				<div className="section-heading">
 					<div>
-						<h2>今日のCore</h2>
-						<p>3つの証跡がそろうと今日の学習が完了します。</p>
+						<h2>{t('today.core')}</h2>
+						<p>{t('today.coreDescription')}</p>
 					</div>
 					<strong>{completed}/3</strong>
 				</div>
@@ -831,18 +963,18 @@ function Today() {
 							key={step.key}
 							className={`core-step tone-${step.tone}${data.core[step.key] ? ' is-complete' : ''}`}
 							type="button"
-							aria-label={`${step.title} · ${data.core[step.key] ? '完了' : '未完了'}`}
+							aria-label={`${t(step.titleKey)} · ${data.core[step.key] ? t('core.completed') : t('core.incomplete')}`}
 							onClick={() => navigate(step.to)}
 						>
 							<span className="core-step__number">
 								{data.core[step.key] ? <Icon name="check" /> : index + 1}
 							</span>
 							<span>
-								<strong>{step.title}</strong>
+								<strong>{t(step.titleKey)}</strong>
 								<small>
 									{step.key === 'grammar' && currentPracticeMinutes > 0
-										? `${current.grammar.title} · Non-Voice練習 ${currentPracticeMinutes}分`
-										: step.detail}
+										? `${current.grammar.title} · ${t('curriculum.practiceDescription')} ${t('curriculum.minutes', { count: currentPracticeMinutes })}`
+										: step.detail(locale)}
 								</small>
 							</span>
 							<Icon name="arrow" className="core-step__arrow" />
@@ -852,8 +984,8 @@ function Today() {
 			</section>
 			<section className="boost-strip">
 				<div>
-					<h2>{percent === 100 ? 'まだ話せそう？' : 'BoostはCoreのあとで'}</h2>
-					<p>追加学習は任意です。しなくても失敗にはなりません。</p>
+					<h2>{percent === 100 ? t('today.boostReady') : t('today.boostAfter')}</h2>
+					<p>{t('today.boostDescription')}</p>
 				</div>
 				<button
 					className="button button--dark"
@@ -861,7 +993,7 @@ function Today() {
 					disabled={percent !== 100}
 					onClick={() => navigate('/boost')}
 				>
-					Boostを選ぶ
+					{t('today.chooseBoost')}
 				</button>
 			</section>
 		</AppShell>
@@ -870,6 +1002,7 @@ function Today() {
 
 function Curriculum() {
 	const { data } = useAppState();
+	const { locale, t } = useLocale();
 	const navigate = useNavigate();
 	const initialStage =
 		CURRICULUM_MANIFEST.stages.find(
@@ -884,15 +1017,15 @@ function Curriculum() {
 	return (
 		<AppShell>
 			<PageHeader
-				title={`${AVAILABLE_CURRICULUM_TOTAL_DAYS}日の地図`}
-				description="先取りはpreviewedとして記録されます。未来のCore完了にはなりません。"
+				title={t('curriculum.title', { days: AVAILABLE_CURRICULUM_TOTAL_DAYS })}
+				description={t('curriculum.description')}
 				action={
 					<button className="button" type="button" onClick={() => navigate('/assessment')}>
 						Stage Assessment
 					</button>
 				}
 			/>
-			<div className="phase-tabs" role="tablist" aria-label="学習Stage">
+			<div className="phase-tabs" role="tablist" aria-label={t('curriculum.stage')}>
 				{CURRICULUM_MANIFEST.stages.map((item, index) => (
 					<button
 						key={item.id}
@@ -925,9 +1058,9 @@ function Curriculum() {
 				aria-labelledby={`phase-tab-${CURRICULUM_MANIFEST.stages.indexOf(stage)}`}
 			>
 				<p className="curriculum-stage-guidance">
-					Core {minuteRange(stage.timeGuidance.minimumCoreMinutes)}分 · 推奨
-					{minuteRange(stage.timeGuidance.recommendedMinutes)}分 · Boost込み最大
-					{stage.timeGuidance.maximumWithBoostMinutes}分
+					{locale === 'ja'
+						? `Core ${minuteRange(stage.timeGuidance.minimumCoreMinutes)}分 · 推奨${minuteRange(stage.timeGuidance.recommendedMinutes)}分 · Boost込み最大${stage.timeGuidance.maximumWithBoostMinutes}分`
+						: `Core ${minuteRange(stage.timeGuidance.minimumCoreMinutes)} min · Recommended ${minuteRange(stage.timeGuidance.recommendedMinutes)} min · Up to ${stage.timeGuidance.maximumWithBoostMinutes} min with Boost`}
 				</p>
 				{selectedStageContainsCurrentDay ? (
 					<button
@@ -935,7 +1068,7 @@ function Curriculum() {
 						type="button"
 						onClick={() => navigate(`/curriculum/${data.currentDay}`)}
 					>
-						Day {data.currentDay}へ戻る
+						{t('curriculum.backToDay', { day: data.currentDay })}
 					</button>
 				) : null}
 				{units.map((unit, unitIndex) => {
@@ -954,22 +1087,32 @@ function Curriculum() {
 										Day {unit.startDay}–{unit.endDay}
 									</p>
 								</div>
-								<span>{containsCurrentDay ? '現在のUnit' : '開く'}</span>
+								<span>
+									{containsCurrentDay ? t('curriculum.currentUnit') : t('curriculum.open')}
+								</span>
 							</summary>
 							<div className="curriculum-unit__days">
 								{CURRICULUM.filter((day) => unit.startDay <= day.day && day.day <= unit.endDay).map(
 									(day) => {
-										const status = data.completedDays.includes(day.day)
-											? '完了'
+										const statusKey = data.completedDays.includes(day.day)
+											? 'complete'
 											: day.day === data.currentDay
-												? '今日'
+												? 'today'
 												: data.previewedDays.includes(day.day)
-													? '予習済み'
-													: '未着手';
+													? 'previewed'
+													: 'not-started';
+										const status =
+											statusKey === 'complete'
+												? t('curriculum.completed')
+												: statusKey === 'today'
+													? t('curriculum.today')
+													: statusKey === 'previewed'
+														? t('curriculum.previewed')
+														: t('curriculum.notStarted');
 										return (
 											<button
 												key={day.day}
-												className={`curriculum-row status-${status}`}
+												className={`curriculum-row status-${statusKey}`}
 												type="button"
 												onClick={() => navigate(`/curriculum/${day.day}`)}
 											>
@@ -997,6 +1140,7 @@ function Curriculum() {
 function CurriculumDetail() {
 	const params = useParams();
 	const { data } = useAppState();
+	const { locale, t } = useLocale();
 	const dayNumber = Number(params.day ?? data.currentDay);
 	const day = CURRICULUM[dayNumber - 1] ?? CURRICULUM[0];
 	const lesson = CURRICULUM_MANIFEST.lessons[day.day - 1];
@@ -1009,11 +1153,11 @@ function CurriculumDetail() {
 					<p>{day.grammar.focus}</p>
 				</article>
 				<article className="surface">
-					<h2>単語</h2>
+					<h2>{t('curriculum.vocabulary')}</h2>
 					<p>{day.vocabulary.map((item) => item.text).join(' · ')}</p>
 				</article>
 				<article className="surface">
-					<h2>定型表現</h2>
+					<h2>{t('curriculum.phrases')}</h2>
 					<ul>
 						{day.phrases.map((item) => (
 							<li key={item.id}>{item.text}</li>
@@ -1021,7 +1165,7 @@ function CurriculumDetail() {
 					</ul>
 				</article>
 				<article className="surface surface--coral">
-					<h2>Voice課題</h2>
+					<h2>{t('curriculum.voiceTask')}</h2>
 					<p>{day.voiceTask}</p>
 				</article>
 			</div>
@@ -1029,11 +1173,16 @@ function CurriculumDetail() {
 				<section className="practice-library" aria-labelledby="practice-library-title">
 					<div className="section-heading">
 						<div>
-							<p className="eyebrow">Non-Voice practice</p>
-							<h2 id="practice-library-title">読む・書く・使い直す</h2>
+							<p className="eyebrow">{t('curriculum.practiceDescription')}</p>
+							<h2 id="practice-library-title">{t('curriculum.practice')}</h2>
 						</div>
 						<p>
-							目安 {lesson.practiceBlocks.reduce((sum, block) => sum + block.estimatedMinutes, 0)}分
+							{t('curriculum.minutes', {
+								count: lesson.practiceBlocks.reduce(
+									(sum, block) => sum + block.estimatedMinutes,
+									0,
+								),
+							})}
 						</p>
 					</div>
 					<div className="practice-block-list">
@@ -1049,7 +1198,9 @@ function CurriculumDetail() {
 											<span>{prompt.prompt}</span>
 											{prompt.output ? (
 												<small>
-													英語 {prompt.output.minimumWords}〜{prompt.output.maximumWords}語
+													{locale === 'ja'
+														? `英語 ${prompt.output.minimumWords}〜${prompt.output.maximumWords}語`
+														: `${prompt.output.minimumWords}–${prompt.output.maximumWords} English words`}
 												</small>
 											) : null}
 										</li>
@@ -1057,8 +1208,9 @@ function CurriculumDetail() {
 								</ol>
 								{block.output ? (
 									<p className="practice-meta">
-										英語 {block.output.minimumWords}〜{block.output.maximumWords}語 ·{' '}
-										{block.estimatedMinutes}分
+										{locale === 'ja'
+											? `英語 ${block.output.minimumWords}〜${block.output.maximumWords}語 · ${block.estimatedMinutes}分`
+											: `${block.output.minimumWords}–${block.output.maximumWords} English words · ${block.estimatedMinutes} min`}
 									</p>
 								) : null}
 							</article>
@@ -1067,9 +1219,7 @@ function CurriculumDetail() {
 				</section>
 			) : null}
 			{day.day > data.currentDay ? (
-				<p className="feedback">
-					未来日の文法予習は、Core完了後のNext Lesson Previewから記録します。
-				</p>
+				<p className="feedback">{t('curriculum.futurePreview')}</p>
 			) : null}
 		</AppShell>
 	);
@@ -1119,6 +1269,7 @@ function practiceBlockIsReviewed(
 
 function Grammar() {
 	const { data, completeStep } = useAppState();
+	const { locale, t } = useLocale();
 	const day = CURRICULUM[data.currentDay - 1] ?? CURRICULUM[0];
 	const lesson = CURRICULUM_MANIFEST.lessons[day.day - 1];
 	const practiceBlocks = lesson?.practiceBlocks ?? [];
@@ -1151,29 +1302,42 @@ function Grammar() {
 	);
 	const practiceReady = practiceInputsReady && practiceReviewed;
 	const feedback = !checked
-		? '入力後に答えを確認します。'
+		? locale === 'ja'
+			? '入力後に答えを確認します。'
+			: 'Enter an answer, then check it.'
 		: !correct
-			? `今日の形「${day.grammar.expectedAnswer}」を確認してください。`
+			? `${t('grammar.incorrect')} ${day.grammar.expectedAnswer}`
 			: practiceBlocks.length > 0 && !practiceVisible
-				? '正解です。続けて、下の練習で自分の英文を作ります。'
+				? locale === 'ja'
+					? '正解です。続けて、下の練習で自分の英文を作ります。'
+					: 'Correct. Continue below and create your own English.'
 				: practiceBlocks.length > 0 && !practiceInputsReady
 					? practiceAttempted
-						? '未入力の欄、または語数を確認してください。練習文は端末へ保存されません。'
-						: '各課題へ英語で答え、語数を確認してから完了します。'
+						? locale === 'ja'
+							? '未入力の欄、または語数を確認してください。練習文は端末へ保存されません。'
+							: 'Complete each response and check the word count. Practice responses are not saved on this device.'
+						: locale === 'ja'
+							? '各課題へ英語で答え、語数を確認してから完了します。'
+							: 'Answer each task in English and check the word count before continuing.'
 					: practiceBlocks.length > 0 && !practiceReviewed
-						? '回答後にフィードバックを開き、要点とrubricを自己点検してください。必要なら同じ欄で修正できます。'
+						? locale === 'ja'
+							? '回答後にフィードバックを開き、要点とrubricを自己点検してください。必要なら同じ欄で修正できます。'
+							: 'Open feedback after answering, compare key points and the rubric, and revise in the same field if useful.'
 						: saving
-							? '正解です。学習状況を保存しています。'
+							? `${t('grammar.correct')} ${t('grammar.saving')}`
 							: saveResult?.ok
-								? '正解です。次は声に出して3回。'
-								: (saveResult?.message ??
-									'学習状況を保存できませんでした。もう一度お試しください。');
+								? locale === 'ja'
+									? '正解です。次は声に出して3回。'
+									: 'Correct. Say it aloud three times next.'
+								: saveResult
+									? localizeUiMessage(saveResult.message, locale)
+									: t('error.generic');
 	return (
 		<AppShell>
 			<PageHeader title={day.grammar.title} description={day.grammar.focus} />
 			<section className="lesson-layout">
 				<article className="lesson-note">
-					<h2>会話で使う形</h2>
+					<h2>{t('grammar.usedInConversation')}</h2>
 					<p>{day.grammar.explanation}</p>
 					<ul>
 						{day.grammar.examples.map((example) => (
@@ -1205,7 +1369,7 @@ function Grammar() {
 					}}
 				>
 					<p className="eyebrow">Step 1 / 3 · Check the form</p>
-					<h2>まず今日の形を確認</h2>
+					<h2>{t('grammar.checkForm')}</h2>
 					<label className="field">
 						<span>{day.grammar.exercise}</span>
 						<input
@@ -1275,19 +1439,24 @@ function Grammar() {
 													{prompt.guidance ? <small>{prompt.guidance}</small> : null}
 													{prompt.output ? (
 														<small className={promptInvalid ? 'field-error' : undefined}>
-															{promptWords}語 / {prompt.output.minimumWords}〜
-															{prompt.output.maximumWords}語
+															{locale === 'ja'
+																? `${promptWords}語 / ${prompt.output.minimumWords}〜${prompt.output.maximumWords}語`
+																: `${promptWords} words / ${prompt.output.minimumWords}–${prompt.output.maximumWords} words`}
 														</small>
 													) : null}
 													{practiceFeedbackRevealed[prompt.id] ? (
 														<section
 															className="practice-feedback"
-															aria-label={`${index + 1}のフィードバック`}
+															aria-label={
+																locale === 'ja'
+																	? `${index + 1}のフィードバック`
+																	: `Feedback for question ${index + 1}`
+															}
 														>
 															<div className="practice-feedback__head">
 																<div>
 																	<p className="eyebrow">Step 3 / 3 · Compare & retry</p>
-																	<h4>要点と自分の回答を照合</h4>
+																	<h4>{t('grammar.compareRetry')}</h4>
 																</div>
 																<button
 																	className="button button--compact"
@@ -1312,12 +1481,18 @@ function Grammar() {
 																	}}
 																>
 																	<Icon name="copy" />{' '}
-																	{practiceCopyId === prompt.id ? 'コピー済み' : 'AIで添削'}
+																	{practiceCopyId === prompt.id
+																		? t('grammar.copied')
+																		: t('grammar.copyFeedback')}
 																</button>
 															</div>
 															{practiceInitialResponses[prompt.id] !== promptResponse ? (
 																<details>
-																	<summary>最初の回答と修正版を比較</summary>
+																	<summary>
+																		{locale === 'ja'
+																			? '最初の回答と修正版を比較'
+																			: 'Compare your first response and revision'}
+																	</summary>
 																	<p lang="en">{practiceInitialResponses[prompt.id]}</p>
 																</details>
 															) : null}
@@ -1334,12 +1509,15 @@ function Grammar() {
 															<p>{prompt.feedback.rationale}</p>
 															{prompt.feedback.evidenceClue ? (
 																<p>
-																	<strong>本文のclue:</strong> {prompt.feedback.evidenceClue}
+																	<strong>{locale === 'ja' ? '本文のclue' : 'Text clue'}:</strong>{' '}
+																	{prompt.feedback.evidenceClue}
 																</p>
 															) : null}
 															{prompt.feedback.commonErrors?.length ? (
 																<details>
-																	<summary>よくある見落とし</summary>
+																	<summary>
+																		{locale === 'ja' ? 'よくある見落とし' : 'Common things to miss'}
+																	</summary>
 																	<ul>
 																		{prompt.feedback.commonErrors.map((error) => (
 																			<li key={error}>{error}</li>
@@ -1348,7 +1526,7 @@ function Grammar() {
 																</details>
 															) : null}
 															<fieldset className="practice-checklist">
-																<legend>自分の回答を確認</legend>
+																<legend>{t('grammar.selfCheck')}</legend>
 																<ul>
 																	{prompt.feedback.checklist.map((item) => (
 																		<li key={item}>{item}</li>
@@ -1367,12 +1545,10 @@ function Grammar() {
 																			}))
 																		}
 																	/>
-																	<span>比較と必要な修正を終えた</span>
+																	<span>{t('grammar.reviewed')}</span>
 																</label>
 															</fieldset>
-															<p className="practice-meta">
-																修正する場合は上の回答欄を編集し、rubricをもう一度確認します。
-															</p>
+															<p className="practice-meta">{t('grammar.editRetry')}</p>
 														</section>
 													) : (
 														<button
@@ -1390,7 +1566,7 @@ function Grammar() {
 																}));
 															}}
 														>
-															フィードバックを見る
+															{t('grammar.viewFeedback')}
 														</button>
 													)}
 												</div>
@@ -1398,7 +1574,9 @@ function Grammar() {
 										})}
 										{block.output ? (
 											<p className={`practice-meta${invalid ? ' is-error' : ''}`}>
-												{words}語 / {block.output.minimumWords}〜{block.output.maximumWords}語
+												{locale === 'ja'
+													? `${words}語 / ${block.output.minimumWords}〜${block.output.maximumWords}語`
+													: `${words} words / ${block.output.minimumWords}–${block.output.maximumWords} words`}
 											</p>
 										) : null}
 									</article>
@@ -1407,7 +1585,11 @@ function Grammar() {
 						</div>
 					) : null}
 					<button className="button button--primary" type="submit" disabled={saving}>
-						{saving ? '保存中…' : practiceVisible ? '自己点検を完了して保存' : '答えを確認'}
+						{saving
+							? t('grammar.saving')
+							: practiceVisible
+								? t('grammar.completeAndSave')
+								: t('grammar.checkAnswer')}
 					</button>
 				</form>
 			</section>
@@ -1417,6 +1599,7 @@ function Grammar() {
 
 function Library({ kind }: { kind: 'vocabulary' | 'phrases' }) {
 	const { data } = useAppState();
+	const { locale, t } = useLocale();
 	const learningKind = kind === 'vocabulary' ? 'vocabulary' : 'phrase';
 	const normalize = (value: string) =>
 		value.normalize('NFKC').trim().toLocaleLowerCase('en-US').replace(/\s+/gu, ' ');
@@ -1462,35 +1645,39 @@ function Library({ kind }: { kind: 'vocabulary' | 'phrases' }) {
 	return (
 		<AppShell>
 			<PageHeader
-				title={kind === 'vocabulary' ? '単語' : '定型表現'}
+				title={kind === 'vocabulary' ? t('curriculum.vocabulary') : t('curriculum.phrases')}
 				description={
 					kind === 'vocabulary'
-						? '能動語彙600–800語を、会話の場面と一緒に覚えます。'
-						: '会話を止めない150表現を集めます。'
+						? locale === 'ja'
+							? '能動語彙600–800語を、会話の場面と一緒に覚えます。'
+							: 'Build 600–800 active words alongside the situations where you can use them.'
+						: locale === 'ja'
+							? '会話を止めない150表現を集めます。'
+							: 'Collect 150 useful phrases that keep a conversation moving.'
 				}
 			/>
 			<label className="search-field">
-				<span>検索</span>
+				<span>{t('library.search')}</span>
 				<input
 					type="search"
 					value={query}
 					onChange={(event) => setQuery(event.target.value)}
-					placeholder="英語またはテーマ"
+					placeholder={locale === 'ja' ? '英語またはテーマ' : 'English or topic'}
 				/>
 			</label>
 			<label className="search-field">
-				<span>状態</span>
+				<span>{t('library.status')}</span>
 				<select value={status} onChange={(event) => setStatus(event.target.value)}>
-					<option value="all">すべて</option>
-					<option value="curriculum">未獲得</option>
-					<option value="previewed">予習済み</option>
-					<option value="new">新規</option>
-					<option value="learning">学習中</option>
-					<option value="learned">習得</option>
+					<option value="all">{t('library.all')}</option>
+					<option value="curriculum">{t('library.notAcquired')}</option>
+					<option value="previewed">{t('library.previewed')}</option>
+					<option value="new">{t('library.new')}</option>
+					<option value="learning">{t('library.learning')}</option>
+					<option value="learned">{t('library.learned')}</option>
 				</select>
 			</label>
 			<p className="result-count" aria-live="polite">
-				{filtered.length}件
+				{locale === 'ja' ? `${filtered.length}件` : `${filtered.length} items`}
 			</p>
 			<div className="library-list">
 				{filtered.map((item, index) => (
@@ -1498,7 +1685,9 @@ function Library({ kind }: { kind: 'vocabulary' | 'phrases' }) {
 						<span>{item.day ? `DAY ${item.day}` : 'VOICE'}</span>
 						<strong>{item.term}</strong>
 						<small>{item.note}</small>
-						<small>状態: {item.status}</small>
+						<small>
+							{t('library.status')}: {item.status}
+						</small>
 					</article>
 				))}
 			</div>
@@ -1508,6 +1697,7 @@ function Library({ kind }: { kind: 'vocabulary' | 'phrases' }) {
 
 function Reviews() {
 	const { data, completeStep, gradeReview } = useAppState();
+	const { locale, t } = useLocale();
 	const card = data.reviewCards[0];
 	const [revealed, setRevealed] = useState(false);
 	useEffect(() => {
@@ -1523,8 +1713,12 @@ function Reviews() {
 	return (
 		<AppShell>
 			<PageHeader
-				title="期限が来た復習"
-				description={`${data.reviewCount}枚 · 間隔反復は少ない量を、忘れる直前に戻します。`}
+				title={t('reviews.title')}
+				description={
+					locale === 'ja'
+						? `${data.reviewCount}枚 · 間隔反復は少ない量を、忘れる直前に戻します。`
+						: `${data.reviewCount} cards · Spaced retrieval brings a small amount back just before you forget it.`
+				}
 			/>
 			<section className="review-workspace">
 				{card ? (
@@ -1532,30 +1726,36 @@ function Reviews() {
 						className={`review-card${revealed ? ' is-revealed' : ''}`}
 						type="button"
 						onClick={() => setRevealed(true)}
-						aria-label={revealed ? `答え: ${card.back}` : `問題: ${card.front}。答えを見る`}
+						aria-label={
+							revealed
+								? `${locale === 'ja' ? '答え' : 'Answer'}: ${card.back}`
+								: `${locale === 'ja' ? '問題' : 'Question'}: ${card.front}. ${t('reviews.tapReveal')}`
+						}
 					>
 						<span>{revealed ? 'ANSWER' : 'QUESTION'}</span>
 						<strong>{revealed ? card.back : card.front}</strong>
-						<small>{revealed ? '声に出せたら評価してください。' : 'タップして答えを見る'}</small>
+						<small>{revealed ? t('reviews.gradePrompt') : t('reviews.tapReveal')}</small>
 					</button>
 				) : (
 					<p className="feedback is-success" role="status">
-						今日が期限のカードはありません。復習は完了です。
+						{locale === 'ja'
+							? '今日が期限のカードはありません。復習は完了です。'
+							: 'There are no cards due today. Your reviews are complete.'}
 					</p>
 				)}
 				{card && revealed ? (
 					<div className="grade-row">
 						<button type="button" onClick={() => void grade('again')}>
-							もう一度
+							{locale === 'ja' ? 'もう一度' : 'Again'}
 						</button>
 						<button type="button" onClick={() => void grade('hard')}>
-							難しい
+							{locale === 'ja' ? '難しい' : 'Hard'}
 						</button>
 						<button type="button" onClick={() => void grade('good')}>
-							できた
+							{locale === 'ja' ? 'できた' : 'Good'}
 						</button>
 						<button type="button" onClick={() => void grade('easy')}>
-							簡単
+							{locale === 'ja' ? '簡単' : 'Easy'}
 						</button>
 					</div>
 				) : null}
@@ -1566,11 +1766,16 @@ function Reviews() {
 
 function Mistakes() {
 	const { data } = useAppState();
+	const { locale, t } = useLocale();
 	return (
 		<AppShell>
 			<PageHeader
-				title="間違いノート"
-				description="同じミスが3回以上なら、次のBoostでWeakness Attackを優先します。"
+				title={t('mistakes.title')}
+				description={
+					locale === 'ja'
+						? '同じミスが3回以上なら、次のBoostでWeakness Attackを優先します。'
+						: 'When the same mistake appears three times or more, your next Boost prioritizes Weakness Attack.'
+				}
 			/>
 			<div className="mistake-list">
 				{data.mistakes.map((item) => (
@@ -1581,7 +1786,7 @@ function Mistakes() {
 							<p>{item.correction}</p>
 						</div>
 						<span className={item.repetitions >= 3 ? 'repeat-count is-urgent' : 'repeat-count'}>
-							{item.repetitions}回
+							{locale === 'ja' ? `${item.repetitions}回` : `${item.repetitions} times`}
 						</span>
 					</article>
 				))}
@@ -1592,6 +1797,7 @@ function Mistakes() {
 
 function Voice() {
 	const { data } = useAppState();
+	const { locale, t } = useLocale();
 	const [searchParams] = useSearchParams();
 	const day = CURRICULUM[data.currentDay - 1] ?? CURRICULUM[0];
 	const requestedMode = searchParams.get('mode');
@@ -1686,11 +1892,18 @@ function Voice() {
 	return (
 		<AppShell>
 			<PageHeader
-				title="会話AIへ持っていく"
-				description="自動送信はしません。プロンプトをコピーし、自分で選ぶ会話AIで練習します。"
+				title={t('voice.title')}
+				description={
+					locale === 'ja'
+						? '自動送信はしません。プロンプトをコピーし、自分で選ぶ会話AIで練習します。'
+						: 'Nothing is sent automatically. Copy the prompt and practise with the Conversation AI you choose.'
+				}
 			/>
 			<div className="bridge-layout">
-				<aside className="mode-list" aria-label="プロンプトの種類">
+				<aside
+					className="mode-list"
+					aria-label={locale === 'ja' ? 'プロンプトの種類' : 'Prompt type'}
+				>
 					{['core', 'boost-5', 'boost-15', 'boost-30', 'boost-60', 'study', 'weekly'].map(
 						(item) => (
 							<button
@@ -1701,27 +1914,39 @@ function Voice() {
 								onClick={() => setMode(item)}
 							>
 								{item === 'core'
-									? 'Core会話'
+									? locale === 'ja'
+										? 'Core会話'
+										: 'Core conversation'
 									: item === 'study'
 										? 'Study Mode'
 										: item === 'weekly'
-											? '週次評価'
+											? locale === 'ja'
+												? '週次評価'
+												: 'Weekly review'
 											: item.replace('boost-', 'Boost ')}
-								{item.startsWith('boost') ? '分' : ''}
+								{item.startsWith('boost') ? (locale === 'ja' ? '分' : ' min') : ''}
 							</button>
 						),
 					)}
 				</aside>
 				<section className="prompt-panel">
 					<label className="field">
-						<span>会話AIプリセット</span>
+						<span>{t('voice.provider')}</span>
 						<select
 							value={providerId}
 							onChange={(event) => setProviderId(event.target.value as ConversationProviderId)}
 						>
 							{CONVERSATION_PROVIDER_PRESETS.map((preset) => (
 								<option key={preset.id} value={preset.id}>
-									{preset.label}（{preset.testedStatus === 'tested' ? '確認済み' : '未検証'}）
+									{preset.label} (
+									{preset.testedStatus === 'tested'
+										? locale === 'ja'
+											? '確認済み'
+											: 'tested'
+										: locale === 'ja'
+											? '未検証'
+											: 'unverified'}
+									)
 								</option>
 							))}
 						</select>
@@ -1730,49 +1955,70 @@ function Voice() {
 					{(mode === 'core' || mode.startsWith('boost-')) &&
 					provider.capabilities.voiceConversation !== 'tested' ? (
 						<p className="feedback">
-							このプリセットのVoice対応は未検証です。Voiceを使えない場合、会話・Listeningを含むCoreの代替にはなりません。
+							{locale === 'ja'
+								? 'このプリセットのVoice対応は未検証です。Voiceを使えない場合、会話・Listeningを含むCoreの代替にはなりません。'
+								: 'Voice support for this preset is unverified. Without Voice, it does not substitute for Core practice that includes conversation and listening.'}
 						</p>
 					) : null}
 					<div className="prompt-panel__head">
 						<div>
-							<span>コピー専用</span>
+							<span>{t('voice.copyOnly')}</span>
 							<h2>
 								{mode === 'core'
-									? '今日のCore会話'
+									? locale === 'ja'
+										? '今日のCore会話'
+										: "Today's Core conversation"
 									: mode === 'study'
-										? '通常チャット用Study Mode'
+										? locale === 'ja'
+											? '通常チャット用Study Mode'
+											: 'Study Mode for a normal chat'
 										: mode === 'weekly'
-											? '週次評価'
+											? locale === 'ja'
+												? '週次評価'
+												: 'Weekly review'
 											: mode === 'baseline'
-												? 'ベースライン評価'
+												? locale === 'ja'
+													? 'ベースライン評価'
+													: 'Baseline assessment'
 												: mode.replace('-', ' ')}
 							</h2>
 						</div>
 						<button className="button" type="button" onClick={copy}>
 							<Icon name="copy" />
-							{copyStatus === 'copied' ? 'コピー済み' : 'コピー'}
+							{copyStatus === 'copied' ? t('voice.copied') : t('voice.copyPrompt')}
 						</button>
 					</div>
 					{copyStatus === 'failed' ? (
 						<p className="feedback is-error" role="alert">
-							クリップボードへコピーできませんでした。下のプロンプトを選択して手動でコピーしてください。
+							{locale === 'ja'
+								? 'クリップボードへコピーできませんでした。下のプロンプトを選択して手動でコピーしてください。'
+								: 'Could not copy to the clipboard. Select the prompt below and copy it manually.'}
 						</p>
 					) : null}
-					<pre tabIndex={0} aria-label="コピーする会話AIプロンプト">
+					<pre
+						tabIndex={0}
+						aria-label={
+							locale === 'ja' ? 'コピーする会話AIプロンプト' : 'Conversation AI prompt to copy'
+						}
+					>
 						{prompt}
 					</pre>
 					{mode === 'core' || mode.startsWith('boost-') ? (
 						<>
 							<p>
-								会話AIのテキスト欄へ先に貼り付けて送信し、その後Voiceを開始してください。Voice終了後に明示的に「SESSION_JSONを出力」と送り、返ったJSONだけを取込画面へ貼ります。
+								{locale === 'ja'
+									? '会話AIのテキスト欄へ先に貼り付けて送信し、その後Voiceを開始してください。Voice終了後に明示的に「SESSION_JSONを出力」と送り、返ったJSONだけを取込画面へ貼ります。'
+									: 'Paste and send this in your Conversation AI text chat first, then start Voice. After Voice ends, explicitly ask it to output SESSION_JSON and paste only the returned JSON into the import screen.'}
 							</p>
 							<a className="button button--primary" href="/import">
-								会話後に結果JSONを取り込む
+								{t('voice.importResult')}
 							</a>
 						</>
 					) : (
 						<p>
-							プロンプトをテキストとして先に送信してください。この補助評価ではSESSION_JSONを生成・取込しません。
+							{locale === 'ja'
+								? 'プロンプトをテキストとして先に送信してください。この補助評価ではSESSION_JSONを生成・取込しません。'
+								: 'Send the prompt as text first. This supporting assessment does not create or import SESSION_JSON.'}
 						</p>
 					)}
 				</section>
@@ -1783,6 +2029,7 @@ function Voice() {
 
 function SessionImport() {
 	const { importSession, setEditorDirty } = useAppState();
+	const { formatNumber, locale, t } = useLocale();
 	const [source, setSource] = useState('');
 	const [result, setResult] = useState<ReturnType<typeof parseSession> | null>(null);
 	const [message, setMessage] = useState('');
@@ -1807,13 +2054,17 @@ function SessionImport() {
 	return (
 		<AppShell>
 			<PageHeader
-				title="会話結果JSONを取込"
-				description="元の貼り付け内容は保持したまま、検証結果を別に表示します。"
+				title={t('import.title')}
+				description={
+					locale === 'ja'
+						? '元の貼り付け内容は保持したまま、検証結果を別に表示します。'
+						: 'Keep your original pasted text while showing validation separately.'
+				}
 			/>
 			<section className="import-layout">
 				<div className="import-editor">
 					<label className="field">
-						<span>会話AIが返したJSON</span>
+						<span>{t('import.resultJson')}</span>
 						<textarea
 							aria-invalid={Boolean(result?.errors.length)}
 							aria-describedby="session-import-limit session-import-feedback"
@@ -1826,9 +2077,11 @@ function SessionImport() {
 							placeholder={SAMPLE_SESSION_JSON}
 						/>
 						<small id="session-import-limit">
-							入力上限 1MB（現在 {sourceBytes.toLocaleString('ja-JP')} /{' '}
-							{MAX_SESSION_SOURCE_BYTES.toLocaleString('ja-JP')}{' '}
-							bytes）。上限を超えても入力は消えず、 保存前の検証で拒否します。
+							{locale === 'ja' ? '入力上限 1MB（現在 ' : 'Input limit 1 MB (currently '}
+							{formatNumber(sourceBytes)} / {formatNumber(MAX_SESSION_SOURCE_BYTES)} bytes
+							{locale === 'ja'
+								? '）。上限を超えても入力は消えず、保存前の検証で拒否します。'
+								: '). Text remains visible if it is over the limit and validation rejects it before saving.'}
 						</small>
 					</label>
 					<div className="button-row">
@@ -1840,11 +2093,15 @@ function SessionImport() {
 									setSource(SAMPLE_SESSION_JSON);
 									setEditorDirty(true);
 									setResult(null);
-									setMessage('合成SESSION_JSONを読み込みました。検証してから取り込めます。');
+									setMessage(
+										locale === 'ja'
+											? '合成SESSION_JSONを読み込みました。検証してから取り込めます。'
+											: 'Loaded a synthetic SESSION_JSON. Validate it before importing.',
+									);
 									setMessageIsError(false);
 								}}
 							>
-								合成サンプルを読み込む
+								{locale === 'ja' ? '合成サンプルを読み込む' : 'Load synthetic sample'}
 							</button>
 						) : null}
 						<button
@@ -1856,31 +2113,37 @@ function SessionImport() {
 									setSource(text);
 									setEditorDirty(text.trim().length > 0);
 									setResult(null);
-									setMessage('クリップボードから読み込みました。内容を確認してください。');
+									setMessage(
+										locale === 'ja'
+											? 'クリップボードから読み込みました。内容を確認してください。'
+											: 'Loaded from the clipboard. Review the content.',
+									);
 									setMessageIsError(false);
 								} catch {
 									setMessage(
-										'クリップボードを読み込めませんでした。入力欄は変更していません。直接貼り付けてください。',
+										locale === 'ja'
+											? 'クリップボードを読み込めませんでした。入力欄は変更していません。直接貼り付けてください。'
+											: 'Could not read the clipboard. The input was not changed; paste directly instead.',
 									);
 									setMessageIsError(true);
 								}
 							}}
 						>
-							クリップボード読込
+							{locale === 'ja' ? 'クリップボード読込' : 'Read clipboard'}
 						</button>
 						<button className="button button--primary" type="button" onClick={preview}>
-							検証してプレビュー
+							{t('import.preview')}
 						</button>
 					</div>
 				</div>
 				<aside id="session-import-feedback" className="import-preview" aria-live="polite">
-					<h2>取込プレビュー</h2>
+					<h2>{t('import.previewTitle')}</h2>
 					{result?.errors.length ? (
 						<div className="error-box">
-							<strong>保存できません</strong>
+							<strong>{t('import.notSaved')}</strong>
 							<ul>
 								{result.errors.map((error) => (
-									<li key={error}>{error}</li>
+									<li key={error}>{localizeUiMessage(error, locale)}</li>
 								))}
 							</ul>
 						</div>
@@ -1888,42 +2151,66 @@ function SessionImport() {
 						<div className="preview-data">
 							{result.warnings.length ? (
 								<div className="feedback" role="status">
-									{result.warnings.join(' ')}
+									{result.warnings.map((warning) => localizeUiMessage(warning, locale)).join(' ')}
 								</div>
 							) : null}
 							<dl>
-								<dt>種類</dt>
+								<dt>{t('sessions.type')}</dt>
 								<dd>{result.session.kind}</dd>
-								<dt>時間</dt>
-								<dd>{result.session.durationMinutes}分</dd>
-								<dt>スコア</dt>
+								<dt>{locale === 'ja' ? '時間' : 'Duration'}</dt>
+								<dd>
+									{locale === 'ja'
+										? `${result.session.durationMinutes}分`
+										: `${result.session.durationMinutes} min`}
+								</dd>
+								<dt>{locale === 'ja' ? 'スコア' : 'Score'}</dt>
 								<dd>{result.session.score}</dd>
-								<dt>要約</dt>
+								<dt>{locale === 'ja' ? '要約' : 'Summary'}</dt>
 								<dd>{result.session.summary}</dd>
-								<dt>新規単語</dt>
-								<dd>{structured.data.newVocabulary.length}件</dd>
-								<dt>新規定型表現</dt>
-								<dd>{structured.data.newPhrases.length}件</dd>
-								<dt>文法予習</dt>
-								<dd>{structured.data.previewGrammar.length}件</dd>
-								<dt>間違い</dt>
-								<dd>{structured.data.mistakes.length}件</dd>
-								<dt>復習カード</dt>
-								<dd>{structured.data.reviewCards.length}件</dd>
+								<dt>{locale === 'ja' ? '新規単語' : 'New vocabulary'}</dt>
+								<dd>
+									{locale === 'ja'
+										? `${structured.data.newVocabulary.length}件`
+										: structured.data.newVocabulary.length}
+								</dd>
+								<dt>{locale === 'ja' ? '新規定型表現' : 'New phrases'}</dt>
+								<dd>
+									{locale === 'ja'
+										? `${structured.data.newPhrases.length}件`
+										: structured.data.newPhrases.length}
+								</dd>
+								<dt>{locale === 'ja' ? '文法予習' : 'Grammar preview'}</dt>
+								<dd>
+									{locale === 'ja'
+										? `${structured.data.previewGrammar.length}件`
+										: structured.data.previewGrammar.length}
+								</dd>
+								<dt>{locale === 'ja' ? '間違い' : 'Mistakes'}</dt>
+								<dd>
+									{locale === 'ja'
+										? `${structured.data.mistakes.length}件`
+										: structured.data.mistakes.length}
+								</dd>
+								<dt>{locale === 'ja' ? '復習カード' : 'Review cards'}</dt>
+								<dd>
+									{locale === 'ja'
+										? `${structured.data.reviewCards.length}件`
+										: structured.data.reviewCards.length}
+								</dd>
 							</dl>
 							<button className="button button--primary" type="button" onClick={() => void save()}>
-								この内容を保存
+								{locale === 'ja' ? 'この内容を保存' : 'Save this result'}
 							</button>
 						</div>
 					) : (
-						<p className="empty-copy">JSONを検証すると、保存前の内容がここに表示されます。</p>
+						<p className="empty-copy">{t('import.noPreview')}</p>
 					)}
 					{message ? (
 						<p
 							className={`feedback ${messageIsError ? 'is-error' : 'is-success'}`}
 							role={messageIsError ? 'alert' : 'status'}
 						>
-							{message}
+							{localizeUiMessage(message, locale)}
 						</p>
 					) : null}
 				</aside>
@@ -1934,6 +2221,7 @@ function SessionImport() {
 
 function Sessions() {
 	const { data } = useAppState();
+	const { formatDateTime, locale, t } = useLocale();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const parsedKind = z.enum(['all', 'core', 'boost']).safeParse(searchParams.get('kind') ?? 'all');
 	const parsedDate = z.iso.date().safeParse(searchParams.get('date') ?? '');
@@ -1958,18 +2246,21 @@ function Sessions() {
 	});
 	return (
 		<AppShell>
-			<PageHeader title="セッション履歴" description="CoreとBoostは別々に記録します。" />
-			<form className="session-filters" aria-label="セッション履歴の絞り込み">
+			<PageHeader title={t('sessions.title')} description={t('sessions.description')} />
+			<form
+				className="session-filters"
+				aria-label={locale === 'ja' ? 'セッション履歴の絞り込み' : 'Filter session history'}
+			>
 				<label className="field">
-					<span>種類</span>
+					<span>{t('sessions.type')}</span>
 					<select value={kind} onChange={(event) => updateFilter('kind', event.target.value)}>
-						<option value="all">すべて</option>
+						<option value="all">{t('library.all')}</option>
 						<option value="core">Core</option>
 						<option value="boost">Boost</option>
 					</select>
 				</label>
 				<label className="field">
-					<span>実施日</span>
+					<span>{t('sessions.date')}</span>
 					<input
 						type="date"
 						value={date}
@@ -1977,9 +2268,9 @@ function Sessions() {
 					/>
 				</label>
 				<label className="field">
-					<span>Boostモード</span>
+					<span>{locale === 'ja' ? 'Boostモード' : 'Boost mode'}</span>
 					<select value={mode} onChange={(event) => updateFilter('mode', event.target.value)}>
-						<option value="">すべて</option>
+						<option value="">{t('library.all')}</option>
 						{BoostModeSchema.options.map((value) => (
 							<option key={value} value={value}>
 								{value}
@@ -1993,7 +2284,7 @@ function Sessions() {
 					disabled={!searchParams.size}
 					onClick={() => setSearchParams({}, { replace: true })}
 				>
-					絞り込みを解除
+					{locale === 'ja' ? '絞り込みを解除' : 'Clear filters'}
 				</button>
 			</form>
 			{sessions.length ? (
@@ -2004,14 +2295,16 @@ function Sessions() {
 								<span className="status-chip">{session.kind}</span>
 								<h2>{session.summary}</h2>
 								<p>
-									{new Date(session.completedAt).toLocaleString('ja-JP')} ·{' '}
-									{session.durationMinutes}分
+									{formatDateTime(session.completedAt)} ·{' '}
+									{locale === 'ja'
+										? `${session.durationMinutes}分`
+										: `${session.durationMinutes} min`}
 								</p>
 							</div>
 							<div className="session-list__actions">
 								<strong>{session.score}</strong>
 								<a className="button" href={`/sessions/${encodeURIComponent(session.sessionId)}`}>
-									詳細
+									{locale === 'ja' ? '詳細' : 'Details'}
 								</a>
 							</div>
 						</article>
@@ -2021,17 +2314,25 @@ function Sessions() {
 				<div className="empty-state">
 					<h2>
 						{data.sessions.length
-							? '条件に一致するセッションがありません'
-							: 'まだセッションがありません'}
+							? locale === 'ja'
+								? '条件に一致するセッションがありません'
+								: 'No sessions match these filters'
+							: locale === 'ja'
+								? 'まだセッションがありません'
+								: 'No sessions yet'}
 					</h2>
 					<p>
 						{data.sessions.length
-							? '絞り込みを解除するか、条件を変更してください。'
-							: 'Core Voiceの結果JSONを取り込むと、ここに履歴が残ります。'}
+							? locale === 'ja'
+								? '絞り込みを解除するか、条件を変更してください。'
+								: 'Clear the filters or change the criteria.'
+							: locale === 'ja'
+								? 'Core Voiceの結果JSONを取り込むと、ここに履歴が残ります。'
+								: 'Import a Core Voice result JSON to keep its history here.'}
 					</p>
 					{!data.sessions.length ? (
 						<a className="button" href="/voice">
-							会話準備へ
+							{locale === 'ja' ? '会話準備へ' : 'Prepare a conversation'}
 						</a>
 					) : null}
 				</div>
@@ -2042,6 +2343,7 @@ function Sessions() {
 
 function SessionDetail() {
 	const { data } = useAppState();
+	const { formatDateTime, locale, t } = useLocale();
 	const { sessionId = '' } = useParams();
 	const parsedId = z.string().min(1).max(128).safeParse(sessionId);
 	const session = parsedId.success
@@ -2051,11 +2353,15 @@ function SessionDetail() {
 		return (
 			<AppShell>
 				<PageHeader
-					title="セッションが見つかりません"
-					description="削除済みか、URLが正しくありません。"
+					title={locale === 'ja' ? 'セッションが見つかりません' : 'Session not found'}
+					description={
+						locale === 'ja'
+							? '削除済みか、URLが正しくありません。'
+							: 'It may have been deleted or the URL is incorrect.'
+					}
 				/>
 				<a className="button" href="/sessions">
-					セッション履歴へ戻る
+					{locale === 'ja' ? 'セッション履歴へ戻る' : 'Back to session history'}
 				</a>
 			</AppShell>
 		);
@@ -2063,39 +2369,46 @@ function SessionDetail() {
 	const payload = SessionJsonSchema.safeParse(session.payload);
 	return (
 		<AppShell>
-			<PageHeader title={session.summary} description="保存済みの検証済みセッションです。" />
+			<PageHeader
+				title={session.summary}
+				description={
+					locale === 'ja'
+						? '保存済みの検証済みセッションです。'
+						: 'This is a saved, validated session.'
+				}
+			/>
 			<article className="surface session-detail">
 				<dl>
-					<dt>種類</dt>
+					<dt>{t('sessions.type')}</dt>
 					<dd>{session.kind === 'core' ? 'Core' : 'Boost'}</dd>
-					<dt>実施日時</dt>
+					<dt>{locale === 'ja' ? '実施日時' : 'Completed at'}</dt>
+					<dd>{formatDateTime(session.completedAt, { timeZone: data.timeZone })}</dd>
+					<dt>{locale === 'ja' ? '時間' : 'Duration'}</dt>
 					<dd>
-						{new Date(session.completedAt).toLocaleString('ja-JP', { timeZone: data.timeZone })}
+						{locale === 'ja' ? `${session.durationMinutes}分` : `${session.durationMinutes} min`}
 					</dd>
-					<dt>時間</dt>
-					<dd>{session.durationMinutes}分</dd>
-					<dt>スコア</dt>
+					<dt>{locale === 'ja' ? 'スコア' : 'Score'}</dt>
 					<dd>{session.score}</dd>
-					<dt>間違い</dt>
-					<dd>{session.mistakes.length}件</dd>
+					<dt>{locale === 'ja' ? '間違い' : 'Mistakes'}</dt>
+					<dd>{locale === 'ja' ? `${session.mistakes.length}件` : session.mistakes.length}</dd>
 					{payload.success ? (
 						<>
-							<dt>カリキュラム日</dt>
+							<dt>{locale === 'ja' ? 'カリキュラム日' : 'Curriculum day'}</dt>
 							<dd>Day {payload.data.curriculumDay}</dd>
 							{payload.data.boost ? (
 								<>
-									<dt>Boostモード</dt>
+									<dt>{locale === 'ja' ? 'Boostモード' : 'Boost mode'}</dt>
 									<dd>{payload.data.boost.mode}</dd>
 								</>
 							) : null}
-							<dt>評価コメント</dt>
+							<dt>{locale === 'ja' ? '評価コメント' : 'Evaluation note'}</dt>
 							<dd>{payload.data.evaluation.commentJa}</dd>
 						</>
 					) : null}
 				</dl>
 			</article>
 			<a className="button" href="/sessions">
-				セッション履歴へ戻る
+				{locale === 'ja' ? 'セッション履歴へ戻る' : 'Back to session history'}
 			</a>
 		</AppShell>
 	);
@@ -2103,33 +2416,34 @@ function SessionDetail() {
 
 function Analytics() {
 	const { data } = useAppState();
+	const { locale, t } = useLocale();
 	const coreRate = Math.round((data.completedDays.length / Math.max(1, data.currentDay)) * 100);
 	const today = studyDateAt(new Date(), data.timeZone);
 	const completedDates = new Set(data.completedStudyDates);
 	const recentDates = Array.from({ length: 7 }, (_, index) => addStudyDays(today, index - 6));
 	return (
 		<AppShell>
-			<PageHeader title="進捗" description="Boostの量ではなく、Coreの継続と使える表現を見ます。" />
+			<PageHeader title={t('analytics.title')} description={t('analytics.description')} />
 			<div className="analytics-grid">
 				<article className="metric metric--wide">
-					<span>CORE完了率</span>
+					<span>{locale === 'ja' ? 'CORE完了率' : 'CORE completion'}</span>
 					<strong>{coreRate}%</strong>
 					<div className="bar">
 						<i style={{ transform: `scaleX(${coreRate / 100})` }} />
 					</div>
 				</article>
 				<article className="metric">
-					<span>連続日数</span>
+					<span>{locale === 'ja' ? '連続日数' : 'Streak'}</span>
 					<strong>
 						{data.streak}
-						<small>日</small>
+						<small>{locale === 'ja' ? '日' : 'days'}</small>
 					</strong>
 				</article>
 				<article className="metric">
 					<span>Voice</span>
 					<strong>
 						{data.sessions.length}
-						<small>回</small>
+						<small>{locale === 'ja' ? '回' : 'sessions'}</small>
 					</strong>
 				</article>
 				<article className="metric">
@@ -2139,22 +2453,28 @@ function Analytics() {
 					</strong>
 				</article>
 				<article className="metric">
-					<span>復習イベント</span>
+					<span>{locale === 'ja' ? '復習イベント' : 'Review events'}</span>
 					<strong>{data.activity.reviewEvents}</strong>
 				</article>
 				<article className="metric">
-					<span>獲得 単語 / 表現</span>
+					<span>{locale === 'ja' ? '獲得 単語 / 表現' : 'Acquired words / phrases'}</span>
 					<strong>
 						{data.activity.acquiredWords} / {data.activity.acquiredPhrases}
 					</strong>
 				</article>
 				<article className="metric">
-					<span>文法進捗</span>
+					<span>{locale === 'ja' ? '文法進捗' : 'Grammar progress'}</span>
 					<strong>{data.activity.grammarProgress}</strong>
 				</article>
 				<article className="metric metric--chart">
-					<span>直近7日</span>
-					<div className="mini-bars" role="img" aria-label="直近7日のCore実績">
+					<span>{locale === 'ja' ? '直近7日' : 'Last 7 days'}</span>
+					<div
+						className="mini-bars"
+						role="img"
+						aria-label={
+							locale === 'ja' ? '直近7日のCore実績' : 'Core activity over the last 7 days'
+						}
+					>
 						{recentDates.map((date) => (
 							<i key={date} className={completedDates.has(date) ? 'is-done' : ''} title={date} />
 						))}
@@ -2177,6 +2497,7 @@ const boostModes: ReadonlyArray<{ id: BoostMode; label: string }> = [
 
 function Boost() {
 	const { data } = useAppState();
+	const { locale, t } = useLocale();
 	const navigate = useNavigate();
 	const [minutes, setMinutes] = useState(15);
 	const scoredSessions = data.sessions
@@ -2208,14 +2529,15 @@ function Boost() {
 	if (!Object.values(data.core).every(Boolean)) return <Navigate to="/today" replace />;
 	return (
 		<AppShell>
-			<PageHeader title="Boost" description="追加学習です。未来のCore完了には使いません。" />
+			<PageHeader title={t('boost.title')} description={t('boost.description')} />
 			<section className="boost-builder">
 				<p className="feedback" role="status">
-					おすすめ: {boostModes.find((item) => item.id === recommended)?.label}（
-					{recommendation.reason}）
+					{locale === 'ja'
+						? `おすすめ: ${boostModes.find((item) => item.id === recommended)?.label}（${recommendation.reason}）`
+						: `Recommended: ${boostModes.find((item) => item.id === recommended)?.label}. Selected from your due reviews and recent learning signals.`}
 				</p>
 				<div>
-					<h2>時間を選ぶ</h2>
+					<h2>{locale === 'ja' ? '時間を選ぶ' : 'Choose time'}</h2>
 					<div className="time-options">
 						{[5, 15, 30, 60].map((value) => (
 							<button
@@ -2226,13 +2548,13 @@ function Boost() {
 								onClick={() => setMinutes(value)}
 							>
 								<strong>{value}</strong>
-								<span>分</span>
+								<span>{locale === 'ja' ? '分' : 'min'}</span>
 							</button>
 						))}
 					</div>
 				</div>
 				<div>
-					<h2>モードを選ぶ</h2>
+					<h2>{locale === 'ja' ? 'モードを選ぶ' : 'Choose a mode'}</h2>
 					<div className="mode-grid">
 						{boostModes.map((item) => (
 							<button
@@ -2262,7 +2584,7 @@ function Boost() {
 					type="button"
 					onClick={() => navigate(`/voice?mode=boost-${minutes}&boost=${encodeURIComponent(mode)}`)}
 				>
-					Boostプロンプトを作る
+					{locale === 'ja' ? 'Boostプロンプトを作る' : 'Create a Boost prompt'}
 				</button>
 			</section>
 		</AppShell>
@@ -2270,6 +2592,7 @@ function Boost() {
 }
 
 function Backup() {
+	const { formatDateTime, locale, t } = useLocale();
 	const [preview, setPreview] = useState<BackupPreview | null>(null);
 	const [confirmed, setConfirmed] = useState(false);
 	const [busy, setBusy] = useState(false);
@@ -2287,7 +2610,11 @@ function Backup() {
 			link.download = `trellune-backup-${new Date().toISOString().slice(0, 10)}.json`;
 			link.click();
 			URL.revokeObjectURL(url);
-			setMessage('改ざん検知情報を含むバックアップを作成しました。');
+			setMessage(
+				locale === 'ja'
+					? '改ざん検知情報を含むバックアップを作成しました。'
+					: 'Created a backup with tamper-detection information.',
+			);
 		} catch (error) {
 			setIsError(true);
 			setMessage(backupFailureMessage(error));
@@ -2305,7 +2632,11 @@ function Backup() {
 		try {
 			assertBackupFileSize(file.size);
 			setPreview(await previewBackupText(await file.text()));
-			setMessage('検証に成功しました。まだ端末内データは変更していません。');
+			setMessage(
+				locale === 'ja'
+					? '検証に成功しました。まだ端末内データは変更していません。'
+					: 'Validation succeeded. No data on this device has changed yet.',
+			);
 		} catch (error) {
 			setIsError(true);
 			setMessage(backupFailureMessage(error));
@@ -2322,7 +2653,11 @@ function Backup() {
 			await applyBackupPreview(preview);
 			setPreview(null);
 			setConfirmed(false);
-			setMessage('バックアップを復元し、保存後の件数も確認しました。');
+			setMessage(
+				locale === 'ja'
+					? 'バックアップを復元し、保存後の件数も確認しました。'
+					: 'Backup restored and saved record counts verified.',
+			);
 		} catch (error) {
 			setIsError(true);
 			setMessage(backupFailureMessage(error));
@@ -2332,25 +2667,35 @@ function Backup() {
 	};
 	const impactRows = preview
 		? [
-				['セッション', preview.impact.sessions],
-				['間違い', preview.impact.mistakes],
-				['学習項目', preview.impact.learningItems],
-				['復習カード', preview.impact.reviewCards],
-				['日次進捗', preview.impact.dailyProgress],
+				[locale === 'ja' ? 'セッション' : 'Sessions', preview.impact.sessions],
+				[locale === 'ja' ? '間違い' : 'Mistakes', preview.impact.mistakes],
+				[locale === 'ja' ? '学習項目' : 'Learning items', preview.impact.learningItems],
+				[locale === 'ja' ? '復習カード' : 'Review cards', preview.impact.reviewCards],
+				[locale === 'ja' ? '日次進捗' : 'Daily progress', preview.impact.dailyProgress],
 			]
 		: [];
 	return (
 		<AppShell>
 			<PageHeader
-				title="バックアップと復元"
-				description="端末内データをJSONとして保存します。音声は含みません。"
+				title={t('backup.title')}
+				description={
+					locale === 'ja'
+						? '端末内データをJSONとして保存します。音声は含みません。'
+						: 'Save this device’s data as JSON. Audio is not included.'
+				}
 			/>
 			<div className="detail-grid">
 				<article className="surface surface--pear">
-					<h2>バックアップ</h2>
-					<p>現在の設定、進捗、履歴、間違いノートを書き出します。</p>
+					<h2>{t('backup.export')}</h2>
 					<p>
-						JSONは暗号化されません。共有フォルダーや公開リンクを避け、自分だけがアクセスできる場所へ安全に保管してください。
+						{locale === 'ja'
+							? '現在の設定、進捗、履歴、間違いノートを書き出します。'
+							: 'Export current settings, progress, history, and mistake notes.'}
+					</p>
+					<p>
+						{locale === 'ja'
+							? 'JSONは暗号化されません。共有フォルダーや公開リンクを避け、自分だけがアクセスできる場所へ安全に保管してください。'
+							: 'JSON backups are not encrypted. Avoid shared folders and public links; store them somewhere only you can access.'}
 					</p>
 					<button
 						className="button button--primary"
@@ -2358,14 +2703,16 @@ function Backup() {
 						disabled={busy}
 						onClick={() => void download()}
 					>
-						JSONを保存
+						{t('backup.export')}
 					</button>
 				</article>
 				<article className="surface">
-					<h2>復元</h2>
-					<p>ファイルを検証して変更件数を表示します。この時点では何も変更しません。</p>
+					<h2>{t('backup.restore')}</h2>
+					<p>{t('backup.restoreDescription')}</p>
 					<label className="field" htmlFor="backup-restore-file">
-						<span>Trelluneバックアップ（JSON）</span>
+						<span>
+							{locale === 'ja' ? 'Trelluneバックアップ（JSON）' : 'Trellune backup (JSON)'}
+						</span>
 						<input
 							id="backup-restore-file"
 							type="file"
@@ -2378,19 +2725,19 @@ function Backup() {
 			</div>
 			{preview ? (
 				<section className="surface backup-preview" aria-labelledby="backup-preview-title">
-					<h2 id="backup-preview-title">復元プレビュー</h2>
+					<h2 id="backup-preview-title">{t('backup.preview')}</h2>
 					<p>
-						作成日時: {new Date(preview.envelope.createdAt).toLocaleString('ja-JP')} ·
-						SHA-256確認済み
+						{locale === 'ja' ? '作成日時' : 'Created'}: {formatDateTime(preview.envelope.createdAt)}{' '}
+						·{locale === 'ja' ? 'SHA-256確認済み' : 'SHA-256 verified'}
 					</p>
 					<table>
 						<thead>
 							<tr>
-								<th scope="col">対象</th>
-								<th scope="col">復元後</th>
-								<th scope="col">追加</th>
-								<th scope="col">更新</th>
-								<th scope="col">削除</th>
+								<th scope="col">{locale === 'ja' ? '対象' : 'Data'}</th>
+								<th scope="col">{locale === 'ja' ? '復元後' : 'After restore'}</th>
+								<th scope="col">{locale === 'ja' ? '追加' : 'Add'}</th>
+								<th scope="col">{locale === 'ja' ? '更新' : 'Update'}</th>
+								<th scope="col">{locale === 'ja' ? '削除' : 'Remove'}</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -2411,7 +2758,11 @@ function Backup() {
 							checked={confirmed}
 							onChange={(event) => setConfirmed(event.target.checked)}
 						/>
-						<span>現在の端末内データを、このプレビュー内容で置き換えることを確認しました</span>
+						<span>
+							{locale === 'ja'
+								? '現在の端末内データを、このプレビュー内容で置き換えることを確認しました'
+								: 'I confirm that the current data on this device will be replaced by this preview.'}
+						</span>
 					</label>
 					<button
 						className="button button--primary"
@@ -2419,13 +2770,13 @@ function Backup() {
 						disabled={!confirmed || busy}
 						onClick={() => void apply()}
 					>
-						確認して復元
+						{t('backup.confirmRestore')}
 					</button>
 				</section>
 			) : null}
 			{message ? (
 				<p className={`feedback${isError ? ' is-error' : ''}`} role={isError ? 'alert' : 'status'}>
-					{message}
+					{localizeUiMessage(message, locale)}
 				</p>
 			) : null}
 		</AppShell>
@@ -2434,6 +2785,7 @@ function Backup() {
 
 function Settings() {
 	const { data, deleteDeviceData, update } = useAppState();
+	const { formatDateTime, locale, setLocale, t } = useLocale();
 	const [syncStatus, setSyncStatus] = useState<SyncStatusSummary | null>(null);
 	const [syncMessage, setSyncMessage] = useState('');
 	const [syncBusy, setSyncBusy] = useState(false);
@@ -2445,17 +2797,27 @@ function Settings() {
 	const syncMessageFor = (result: SyncRunResult): string => {
 		switch (result.status) {
 			case 'completed':
-				return '同期を完了しました。';
+				return locale === 'ja' ? '同期を完了しました。' : 'Sync completed.';
 			case 'busy':
-				return '別の同期処理が実行中です。少し待ってから状態を確認してください。';
+				return locale === 'ja'
+					? '別の同期処理が実行中です。少し待ってから状態を確認してください。'
+					: 'Another sync is running. Wait a moment and check the status again.';
 			case 'offline':
-				return 'オフラインのため同期していません。接続後にもう一度実行してください。';
+				return locale === 'ja'
+					? 'オフラインのため同期していません。接続後にもう一度実行してください。'
+					: 'Sync did not run while offline. Reconnect and try again.';
 			case 'blocked':
 				return result.conflicts
-					? '同期は一部停止しています。下の競合を確認して、採用するデータを選んでください。'
-					: '同期できない操作があります。「停止中の操作を再試行」またはエラー表示を確認してください。';
+					? locale === 'ja'
+						? '同期は一部停止しています。下の競合を確認して、採用するデータを選んでください。'
+						: 'Some sync is blocked. Review the conflicts below and choose which data to keep.'
+					: locale === 'ja'
+						? '同期できない操作があります。「停止中の操作を再試行」またはエラー表示を確認してください。'
+						: 'Some operations cannot sync. Retry blocked operations or check the error shown.';
 			case 'failed':
-				return '同期に失敗しました。端末内の学習データは保存されています。接続とエラー表示を確認してください。';
+				return locale === 'ja'
+					? '同期に失敗しました。端末内の学習データは保存されています。接続とエラー表示を確認してください。'
+					: 'Sync failed. Your learning data remains on this device. Check the connection and error details.';
 		}
 	};
 	useEffect(() => {
@@ -2465,46 +2827,63 @@ function Settings() {
 	}, []);
 	return (
 		<AppShell>
-			<PageHeader title="設定" description="学習の目安と、この端末での保存方法を管理します。" />
+			<PageHeader title={t('settings.title')} description={t('settings.description')} />
 			<div className="settings-list">
 				<section>
 					<div>
-						<h2>1日の目安</h2>
-						<p>Coreの内容は変えず、表示する時間の目安だけ変更します。</p>
+						<h2>{t('settings.languageTitle')}</h2>
+						<p>{t('settings.languageDescription')}</p>
+					</div>
+					<select
+						value={locale}
+						onChange={(event) => setLocale(event.target.value as typeof locale)}
+						aria-label={t('language.label')}
+					>
+						<option value="ja">{t('language.ja')}</option>
+						<option value="en">{t('language.en')}</option>
+					</select>
+				</section>
+				<section>
+					<div>
+						<h2>{t('settings.dailyMinutes')}</h2>
+						<p>{t('settings.dailyMinutesDescription')}</p>
 					</div>
 					<select
 						value={data.dailyMinutes}
 						onChange={(event) => void update({ dailyMinutes: Number(event.target.value) })}
-						aria-label="1日の学習時間"
+						aria-label={locale === 'ja' ? '1日の学習時間' : 'Daily study time'}
 					>
 						{[10, 20, 30, 45].map((value) => (
 							<option key={value} value={value}>
-								{value}分
+								{locale === 'ja' ? `${value}分` : `${value} min`}
 							</option>
 						))}
 					</select>
 				</section>
 				<section className="sync-detail">
 					<div>
-						<h2>同期状態</h2>
+						<h2>{t('settings.syncStatus')}</h2>
 						<p aria-live="polite">
-							未送信 {syncStatus?.pending ?? 0} · 同期中 {syncStatus?.syncing ?? 0} · 停止{' '}
-							{syncStatus?.blocked ?? 0} · 競合 {syncStatus?.conflicts.length ?? 0}
+							{t('sync.pending')} {syncStatus?.pending ?? 0} · {t('sync.syncing')}{' '}
+							{syncStatus?.syncing ?? 0} · {t('sync.blocked')} {syncStatus?.blocked ?? 0} ·{' '}
+							{t('sync.conflicts')} {syncStatus?.conflicts.length ?? 0}
 						</p>
 						<p>
-							最終成功:{' '}
+							{t('sync.lastSuccess')}:{' '}
 							{syncStatus?.lastSuccessAt
-								? new Date(syncStatus.lastSuccessAt).toLocaleString('ja-JP')
-								: 'まだありません'}
+								? formatDateTime(syncStatus.lastSuccessAt)
+								: t('sync.never')}
 						</p>
 						<p>
-							最終試行:{' '}
+							{t('sync.lastAttempt')}:{' '}
 							{syncStatus?.lastAttemptAt
-								? `${new Date(syncStatus.lastAttemptAt).toLocaleString('ja-JP')}（${syncStatus.lastAttemptStatus ?? '不明'}）`
-								: 'まだありません'}
+								? `${formatDateTime(syncStatus.lastAttemptAt)} (${syncStatus.lastAttemptStatus ?? (locale === 'ja' ? '不明' : 'unknown')})`
+								: t('sync.never')}
 						</p>
 						{syncStatus?.lastErrorCode ? (
-							<p className="feedback is-error">エラー: {syncStatus.lastErrorCode}</p>
+							<p className="feedback is-error">
+								{locale === 'ja' ? 'エラー' : 'Error'}: {syncStatus.lastErrorCode}
+							</p>
 						) : null}
 					</div>
 					<div className="button-row">
@@ -2517,14 +2896,18 @@ function Settings() {
 								try {
 									setSyncMessage(syncMessageFor(await syncNow()));
 								} catch {
-									setSyncMessage('同期に失敗しました。端末内の学習データは保存されています。');
+									setSyncMessage(
+										locale === 'ja'
+											? '同期に失敗しました。端末内の学習データは保存されています。'
+											: 'Sync failed. Learning data remains on this device.',
+									);
 								} finally {
 									setSyncBusy(false);
 									await refreshSyncStatus();
 								}
 							}}
 						>
-							{syncBusy ? '同期中…' : '今すぐ同期'}
+							{syncBusy ? t('settings.syncing') : t('settings.syncNow')}
 						</button>
 						<button
 							className="button"
@@ -2535,7 +2918,7 @@ function Settings() {
 								await refreshSyncStatus();
 							}}
 						>
-							停止中の操作を再試行
+							{t('sync.retryBlocked')}
 						</button>
 						<button
 							className="button"
@@ -2544,7 +2927,9 @@ function Settings() {
 							onClick={async () => {
 								if (
 									!window.confirm(
-										'競合として統合できない停止操作だけを送信待ちから外します。端末内データは削除しません。続けますか？',
+										locale === 'ja'
+											? '競合として統合できない停止操作だけを送信待ちから外します。端末内データは削除しません。続けますか？'
+											: 'Remove only blocked operations that cannot be reconciled as conflicts from the sync queue? Data on this device will not be deleted.',
 									)
 								)
 									return;
@@ -2552,19 +2937,21 @@ function Settings() {
 								await refreshSyncStatus();
 							}}
 						>
-							停止操作を待機列から除外
+							{locale === 'ja'
+								? '停止操作を待機列から除外'
+								: 'Remove unreconcilable blocked operations from the queue'}
 						</button>
 					</div>
 					{syncMessage ? (
 						<p className="feedback" role="status">
-							{syncMessage}
+							{localizeUiMessage(syncMessage, locale)}
 						</p>
 					) : null}
 				</section>
 				{syncStatus?.conflicts.map((conflict) => (
 					<section key={conflict.id} className="sync-conflict">
 						<div>
-							<h2>同期競合</h2>
+							<h2>{t('sync.conflict')}</h2>
 							<p>
 								{conflict.entityType} / {conflict.entityId}
 							</p>
@@ -2579,7 +2966,7 @@ function Settings() {
 									await refreshSyncStatus();
 								}}
 							>
-								この端末を採用
+								{t('sync.resolveLocal')}
 							</button>
 							<button
 								className="button"
@@ -2589,15 +2976,15 @@ function Settings() {
 									await refreshSyncStatus();
 								}}
 							>
-								サーバーを採用
+								{t('sync.resolveServer')}
 							</button>
 						</div>
 					</section>
 				))}
 				<section>
 					<div>
-						<h2>D1同期</h2>
-						<p>Accessで保護されたAPIへ同期します。初期状態は端末内だけです。</p>
+						<h2>D1 {t('settings.syncEnable')}</h2>
+						<p>{t('settings.syncDescription')}</p>
 					</div>
 					<label className="switch">
 						<input
@@ -2605,13 +2992,17 @@ function Settings() {
 							checked={data.syncEnabled}
 							onChange={(event) => void update({ syncEnabled: event.target.checked })}
 						/>
-						<span>同期</span>
+						<span>{t('settings.syncEnable')}</span>
 					</label>
 				</section>
 				<section>
 					<div>
-						<h2>動きを減らす</h2>
-						<p>OS設定に加えて、アプリ内の空間的な動きを抑えます。</p>
+						<h2>{t('settings.reduceMotion')}</h2>
+						<p>
+							{locale === 'ja'
+								? 'OS設定に加えて、アプリ内の空間的な動きを抑えます。'
+								: 'Reduce in-app spatial motion in addition to your operating-system preference.'}
+						</p>
 					</div>
 					<label className="switch">
 						<input
@@ -2619,27 +3010,32 @@ function Settings() {
 							checked={data.reduceMotion}
 							onChange={(event) => void update({ reduceMotion: event.target.checked })}
 						/>
-						<span>低減</span>
+						<span>{locale === 'ja' ? '低減' : 'Reduced'}</span>
 					</label>
 				</section>
 				<section className="danger-zone">
 					<div>
-						<h2>この端末の学習データを削除</h2>
+						<h2>{t('settings.deleteData')}</h2>
 						<p id="local-delete-description">
-							プロフィール、設定、進捗、履歴、復習、バックアップ復元情報、未送信同期操作をこの端末から削除します。Cloudflare
-							D1の同期済みデータは削除しません。
+							{locale === 'ja'
+								? 'プロフィール、設定、進捗、履歴、復習、バックアップ復元情報、未送信同期操作をこの端末から削除します。Cloudflare D1の同期済みデータは削除しません。'
+								: 'This deletes the profile, settings, progress, history, reviews, backup-restore information, and unsent sync operations from this device. It does not delete data already synced to Cloudflare D1.'}
 						</p>
-						<p>先にバックアップを保存してください。削除後は元に戻せません。</p>
+						<p>{t('settings.deleteDescription')}</p>
 						<label className="switch delete-confirmation">
 							<input
 								type="checkbox"
 								checked={deleteAcknowledged}
 								onChange={(event) => setDeleteAcknowledged(event.target.checked)}
 							/>
-							<span>対象と不可逆性を確認しました</span>
+							<span>{t('settings.deleteAcknowledged')}</span>
 						</label>
 						<label className="field" htmlFor="local-delete-confirmation">
-							<span>確認のため「{LOCAL_DELETE_CONFIRMATION}」と入力</span>
+							<span>
+								{t('settings.deleteConfirm', {
+									text: locale === 'ja' ? '端末データを削除' : 'DELETE DEVICE DATA',
+								})}
+							</span>
 							<input
 								id="local-delete-confirmation"
 								value={deleteConfirmation}
@@ -2654,7 +3050,7 @@ function Settings() {
 							disabled={
 								deleteBusy ||
 								!deleteAcknowledged ||
-								deleteConfirmation !== LOCAL_DELETE_CONFIRMATION
+								deleteConfirmation !== (locale === 'ja' ? '端末データを削除' : 'DELETE DEVICE DATA')
 							}
 							onClick={async () => {
 								setDeleteBusy(true);
@@ -2663,25 +3059,35 @@ function Settings() {
 								setDeleteBusy(false);
 							}}
 						>
-							{deleteBusy ? '削除しています…' : 'この端末のデータを削除'}
+							{deleteBusy
+								? locale === 'ja'
+									? '削除しています…'
+									: 'Deleting…'
+								: t('settings.deleteButton')}
 						</button>
-						{deleteMessage ? <p role="status">{deleteMessage}</p> : null}
-						<p>同期済みデータを含む削除は、本人確認と本番操作承認が必要なため自動実行しません。</p>
+						{deleteMessage ? <p role="status">{localizeUiMessage(deleteMessage, locale)}</p> : null}
+						<p>
+							{locale === 'ja'
+								? '同期済みデータを含む削除は、本人確認と本番操作承認が必要なため自動実行しません。'
+								: 'Deleting synced data requires identity verification and production-operation approval, so this app does not do it automatically.'}
+						</p>
 					</div>
 				</section>
 			</div>
 			<nav className="settings-links">
-				<a href="/baseline">ベースライン評価を再開</a>
+				<a href="/baseline">
+					{locale === 'ja' ? 'ベースライン評価を再開' : 'Resume baseline assessment'}
+				</a>
 				<a href="/assessment">Stage Assessment</a>
-				<a href="/sessions">セッション履歴</a>
-				<a href="/mistakes">間違いノート</a>
-				<a href="/analytics">進捗分析</a>
-				<a href="/backup">バックアップ</a>
-				<a href="/vocabulary">単語</a>
-				<a href="/phrases">定型表現</a>
+				<a href="/sessions">{t('sessions.title')}</a>
+				<a href="/mistakes">{t('mistakes.title')}</a>
+				<a href="/analytics">{locale === 'ja' ? '進捗分析' : 'Progress analytics'}</a>
+				<a href="/backup">{t('backup.title')}</a>
+				<a href="/vocabulary">{t('curriculum.vocabulary')}</a>
+				<a href="/phrases">{t('curriculum.phrases')}</a>
 			</nav>
 			<footer className="statement-footer">
-				<p>小さく話す。毎日つなぐ。</p>
+				<p>{t('app.tagline')}</p>
 				<div>
 					<span>Trellune</span>
 					<span>Local-first · no AI API</span>
@@ -2692,6 +3098,7 @@ function Settings() {
 }
 
 function OfflineHelp({ unknownPath = false }: { unknownPath?: boolean }) {
+	const { locale, t } = useLocale();
 	const [online, setOnline] = useState<boolean | null>(null);
 	useEffect(() => {
 		const refresh = () => setOnline(navigator.onLine);
@@ -2706,7 +3113,7 @@ function OfflineHelp({ unknownPath = false }: { unknownPath?: boolean }) {
 	if (online === null) {
 		return (
 			<main className="app-loading" aria-busy="true" aria-live="polite">
-				<h1>ページを確認しています…</h1>
+				<h1>{t('offline.loading')}</h1>
 			</main>
 		);
 	}
@@ -2715,22 +3122,32 @@ function OfflineHelp({ unknownPath = false }: { unknownPath?: boolean }) {
 			<PageHeader
 				title={
 					online && unknownPath
-						? 'ページが見つかりません'
-						: 'このページはまだオフラインで使えません'
+						? locale === 'ja'
+							? 'ページが見つかりません'
+							: 'Page not found'
+						: locale === 'ja'
+							? 'このページはまだオフラインで使えません'
+							: 'This page is not available offline yet'
 				}
 				description={
 					online && unknownPath
-						? 'URLを確認するか、取得済みの画面へ戻ってください。'
-						: 'オンライン時に一度開くと、次回から利用できる場合があります。'
+						? locale === 'ja'
+							? 'URLを確認するか、取得済みの画面へ戻ってください。'
+							: 'Check the URL or return to a screen already available on this device.'
+						: locale === 'ja'
+							? 'オンライン時に一度開くと、次回から利用できる場合があります。'
+							: 'Open it once while online to make it available on a later visit.'
 				}
 			/>
 			<div className="empty-state">
-				<h2>オフラインで開けないとき</h2>
+				<h2>{t('offline.help')}</h2>
 				<p>
-					入力中の学習データは削除していません。取得済みの主要画面へ戻り、通信復帰後にこのURLをもう一度開いてください。
+					{locale === 'ja'
+						? '入力中の学習データは削除していません。取得済みの主要画面へ戻り、通信復帰後にこのURLをもう一度開いてください。'
+						: 'Your in-progress learning data has not been deleted. Return to an available core screen and open this URL again after your connection returns.'}
 				</p>
 				<a className="button button--primary" href="/today">
-					今日のCoreへ戻る
+					{locale === 'ja' ? '今日のCoreへ戻る' : "Return to today's Core"}
 				</a>
 			</div>
 		</AppShell>
@@ -2743,20 +3160,21 @@ function UnknownRoute() {
 
 function RouteEffects() {
 	const location = useLocation();
+	const { t } = useLocale();
 	const initialRender = useRef(true);
 	useEffect(() => {
 		const routeName: Record<string, string> = {
-			'/today': '今日',
-			'/curriculum': `${AVAILABLE_CURRICULUM_TOTAL_DAYS}日の地図`,
-			'/reviews': '期限が来た復習',
-			'/voice': '会話AIへ持っていく',
-			'/import': '会話結果JSONを取込',
-			'/settings': '設定',
-			'/backup': 'バックアップと復元',
-			'/sessions': 'セッション履歴',
-			'/assessment': 'Stage Assessment',
+			'/today': t('nav.today'),
+			'/curriculum': t('curriculum.title', { days: AVAILABLE_CURRICULUM_TOTAL_DAYS }),
+			'/reviews': t('reviews.title'),
+			'/voice': t('voice.title'),
+			'/import': t('import.title'),
+			'/settings': t('settings.title'),
+			'/backup': t('backup.title'),
+			'/sessions': t('sessions.title'),
+			'/assessment': t('assessment.title'),
 		};
-		document.title = `${routeName[location.pathname] ?? 'Trellune'} · Trellune`;
+		document.title = `${routeName[location.pathname] ?? t('app.name')} · ${t('app.name')}`;
 		const timer = window.setTimeout(() => {
 			if (initialRender.current) {
 				initialRender.current = false;
@@ -2765,7 +3183,7 @@ function RouteEffects() {
 			document.querySelector<HTMLElement>('main h1')?.focus();
 		}, 0);
 		return () => window.clearTimeout(timer);
-	}, [location.pathname]);
+	}, [location.pathname, t]);
 	return null;
 }
 

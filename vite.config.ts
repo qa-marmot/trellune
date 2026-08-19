@@ -31,12 +31,12 @@ export default defineConfig({
 			manifest: {
 				name: isDemoMode ? 'Trellune Demo' : 'Trellune',
 				short_name: isDemoMode ? 'Trellune Demo' : 'Trellune',
-				description: '365日で英語を積み上げる、ローカル優先の学習PWA',
+				description: 'A local-first English learning PWA / ローカル優先の英語学習PWA',
 				theme_color: '#f6f2e7',
 				background_color: '#f6f2e7',
 				display: 'standalone',
 				start_url: '/',
-				lang: 'ja',
+				lang: 'en',
 				icons: [
 					{ src: '/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
 					{ src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },

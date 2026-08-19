@@ -9,7 +9,10 @@ describe('public Trellune brand with legacy data compatibility', () => {
 		);
 		expect(readFileSync(resolve('index.html'), 'utf8')).toContain('<title>Trellune</title>');
 		expect(readFileSync(resolve('src/components/AppShell.tsx'), 'utf8')).toContain(
-			'Trellune ホーム',
+			"t('home.aria')",
+		);
+		expect(readFileSync(resolve('src/i18n/locales/ja.ts'), 'utf8')).toContain(
+			"'home.aria': 'Trellune ホーム'",
 		);
 	});
 
