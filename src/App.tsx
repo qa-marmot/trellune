@@ -65,6 +65,7 @@ import {
 } from './storage/backup';
 import { type AppData, useAppState } from './state/AppState';
 import { localizeUiMessage, useLocale } from './i18n';
+import { usePwaUpdate, type PwaUpdateStatus } from './pwa/update';
 
 type CoreDisplayStep = keyof AppData['core'];
 
@@ -2786,6 +2787,7 @@ function Backup() {
 function Settings() {
 	const { data, deleteDeviceData, update } = useAppState();
 	const { formatDateTime, locale, setLocale, t } = useLocale();
+	const pwaUpdate = usePwaUpdate();
 	const [syncStatus, setSyncStatus] = useState<SyncStatusSummary | null>(null);
 	const [syncMessage, setSyncMessage] = useState('');
 	const [syncBusy, setSyncBusy] = useState(false);
@@ -2793,6 +2795,24 @@ function Settings() {
 	const [deleteConfirmation, setDeleteConfirmation] = useState('');
 	const [deleteBusy, setDeleteBusy] = useState(false);
 	const [deleteMessage, setDeleteMessage] = useState('');
+	const pwaStatusMessage = (status: PwaUpdateStatus): string => {
+		switch (status) {
+			case 'checking':
+				return t('update.checking');
+			case 'ready':
+				return t('update.ready');
+			case 'available':
+				return t('update.available');
+			case 'offline':
+				return t('update.offline');
+			case 'unsupported':
+				return t('update.unsupported');
+			case 'error':
+				return t('update.error');
+			case 'idle':
+				return '';
+		}
+	};
 	const refreshSyncStatus = async () => setSyncStatus(await getSyncStatus());
 	const syncMessageFor = (result: SyncRunResult): string => {
 		switch (result.status) {
@@ -2842,6 +2862,28 @@ function Settings() {
 						<option value="ja">{t('language.ja')}</option>
 						<option value="en">{t('language.en')}</option>
 					</select>
+				</section>
+				<section>
+					<div>
+						<h2>{t('settings.updates')}</h2>
+						<p>{t('settings.updatesDescription')}</p>
+						{pwaUpdate.status !== 'idle' ? (
+							<p
+								className={pwaUpdate.status === 'error' ? 'feedback is-error' : undefined}
+								aria-live="polite"
+							>
+								{pwaStatusMessage(pwaUpdate.status)}
+							</p>
+						) : null}
+					</div>
+					<button
+						className="button"
+						type="button"
+						disabled={pwaUpdate.status === 'checking' || pwaUpdate.status === 'unsupported'}
+						onClick={() => void pwaUpdate.check()}
+					>
+						{pwaUpdate.status === 'checking' ? t('update.checking') : t('update.check')}
+					</button>
 				</section>
 				<section>
 					<div>

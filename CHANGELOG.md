@@ -3,6 +3,15 @@
 All notable changes are recorded here. Trellune follows semantic versioning
 when a release is made.
 
+## v1.8.1 — Reliable installed-PWA updates
+
+- Added a consent-safe in-app update check that uses only the standard
+  service-worker update lifecycle
+- Made update-check completion and failures visible with redacted, safe status
+  text; no cache, IndexedDB, or learner data is cleared
+- Added a realistic legacy-installed-shell regression: close/reopen, waiting
+  worker detection, explicit consent, data preservation, and offline reopen
+
 ## v1.8.0 — Japanese and English UI
 
 - Added a lightweight, type-safe Japanese/English UI locale layer
