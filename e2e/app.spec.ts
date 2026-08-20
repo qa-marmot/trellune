@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
 	await page.goto('/onboarding');
-	await page.getByLabel('呼ばれたい名前').fill('Yabu');
+	await page.getByLabel('呼ばれたい名前').fill('Alex');
 	await page.getByRole('button', { name: /ベースラインへ/ }).click();
 	await page.getByRole('button', { name: /Day 1を始める/ }).click();
 });

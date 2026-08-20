@@ -281,4 +281,24 @@ describe('Cloudflare Access authentication', () => {
 			).toBeNull();
 		}
 	});
+
+	it('permits the explicit local fallback only on loopback requests', async () => {
+		const environment = { ALLOW_LOCAL_AUTH: 'true' };
+		expect(
+			await authenticateLearner(
+				new Request('http://127.0.0.1:8787/api/v1/today', {
+					headers: { 'x-english-os-local-user': 'local-fixture' },
+				}),
+				environment,
+			),
+		).toMatchObject({ learnerId: expect.stringMatching(/^learner-[0-9a-f]{32}$/) });
+		expect(
+			await authenticateLearner(
+				new Request('https://app.example.test/api/v1/today', {
+					headers: { 'x-english-os-local-user': 'remote-spoof' },
+				}),
+				environment,
+			),
+		).toBeNull();
+	});
 });

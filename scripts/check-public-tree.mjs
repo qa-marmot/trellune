@@ -9,6 +9,13 @@ const tracked = execFileSync('git', ['ls-files', '--cached', '--others', '--excl
 const forbiddenPath =
 	/(?:^|\/)(?:\.dev\.vars|wrangler\.local\.jsonc|\.env|backups|learner-data)(?:$|\/)|\.(?:sqlite(?:3)?|db|bak)$/iu;
 const failures = tracked.filter((file) => forbiddenPath.test(file) && file !== '.env.example');
+const personalMarkers = [
+	['personal fixture identifier', /\bYabu\b/iu],
+	['personal Windows path', /C:\\Users\\yabu(?:\\|\/|$)/iu],
+	['personal macOS path', /\/Users\/yabu(?:\/|$)/iu],
+	['personal Linux path', /\/home\/yabu(?:\/|$)/iu],
+];
+const personalMarkerExceptions = new Set(['scripts/check-public-tree.mjs']);
 const textFiles = tracked.filter((file) => {
 	try {
 		return (
@@ -30,6 +37,11 @@ for (const file of textFiles) {
 		/-----BEGIN(?: [A-Z]+)? PRIVATE KEY-----/u.test(text)
 	) {
 		failures.push(`${file}: credential-like material`);
+	}
+	if (!personalMarkerExceptions.has(file)) {
+		for (const [label, pattern] of personalMarkers) {
+			if (pattern.test(text)) failures.push(`${file}: ${label}`);
+		}
 	}
 }
 
