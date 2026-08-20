@@ -23,6 +23,11 @@ body:
     id: version
     attributes:
       label: Version or commit
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and operating system
+      placeholder: 'For example: Safari 18 on iOS 18'
   - type: dropdown
     id: area
     attributes:

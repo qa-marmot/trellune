@@ -1,0 +1,36 @@
+name: Provider compatibility evidence
+description: Record a manual, reproducible result for a conversation-AI provider.
+title: 'provider: '
+labels: [provider, testing]
+body:
+  - type: markdown
+    attributes:
+      value: 'Manual copy/paste evidence only. Do not include credentials, private conversations, audio, raw personal output, or automated-provider tooling.'
+  - type: input
+    id: provider
+    attributes:
+      label: Provider and interface
+      placeholder: 'For example: Gemini web text chat'
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Browser / device / date
+      placeholder: 'Use a synthetic learner and lesson references only.'
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Reproducible result
+      description: 'Prompt rendering, one-question behavior, SESSION_JSON validation, and limitations.'
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: 'I used no private learner data, credentials, provider automation, or stored audio.'
+          required: true

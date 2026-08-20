@@ -10,6 +10,10 @@ test('the synthetic local-only demo seeds, previews a fixture import, and resets
 		page.getByText('公開デモ: 合成データのみ・同期なし。保存先は通常版と分離されています。'),
 	).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'はじめまして' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'GitHubで見る' })).toHaveAttribute(
+		'href',
+		'https://github.com/qa-marmot/trellune',
+	);
 
 	await page.getByRole('button', { name: 'Reading/Writing の例へ' }).click();
 	await expect(page).toHaveURL(/\/curriculum\/6$/u);
@@ -36,6 +40,7 @@ test('the synthetic demo switches to English without changing its isolated data'
 		),
 	).toBeVisible();
 	await expect(page.getByRole('heading', { name: "Today's Core" })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'View on GitHub' })).toBeVisible();
 	await page.getByRole('button', { name: 'Open a Reading/Writing example' }).click();
 	await expect(page.getByRole('heading', { name: 'Read, write, and reuse' })).toBeVisible();
 	await page.reload();

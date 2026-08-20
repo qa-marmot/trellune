@@ -27,6 +27,8 @@
 		"test:d1:local": "pnpm build && node scripts/verify-local-d1.mjs",
 		"test:pwa:update": "node scripts/verify-pwa-update.mjs",
 		"test:demo": "cross-env VITE_DEMO_MODE=true playwright test e2e/demo.spec.ts --project=mobile-chromium",
+		"screenshots": "cross-env VITE_DEMO_MODE=true CAPTURE_README_SCREENSHOTS=true playwright test e2e/readme-screenshots.spec.ts --project=mobile-chromium",
+		"check:quick": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
 		"docs:check-links": "node scripts/check-markdown-links.mjs",
 		"public:check": "node scripts/check-public-tree.mjs",
 		"public:export": "node scripts/export-public-snapshot.mjs",

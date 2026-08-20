@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and broad ideas
+    url: https://github.com/qa-marmot/trellune/discussions
+    about: Please use GitHub Discussions for questions, ideas, learning stories, and early feedback.
+  - name: Security report
+    url: https://github.com/qa-marmot/trellune/security/policy
+    about: Please follow the security policy instead of filing a public issue.

@@ -20,6 +20,7 @@ export const en: Record<TranslationKey, string> = {
 	'demo.reset': 'Reset synthetic data',
 	'demo.resetting': 'Resetting…',
 	'demo.readingExample': 'Open a Reading/Writing example',
+	'demo.github': 'View on GitHub',
 	'demo.curriculumNotice': 'Some curriculum support content is currently Japanese-first.',
 	'update.available': 'A new version is available.',
 	'update.apply': 'Review and update',

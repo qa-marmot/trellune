@@ -1,20 +1,13 @@
-## Summary
+## What changed?
 
-Describe the learner-facing and technical change.
+## Why?
 
-## Compatibility and safety
+## Learner impact and compatibility
 
-- [ ] No learner data, secrets, raw pasted content, audio, or local databases included
-- [ ] Core/Boost boundary and stable curriculum IDs preserved
-- [ ] Protocol/schema/migration impact documented (or explicitly none)
-- [ ] Provider integration remains manual copy/paste; no AI API added
-
-## Validation
-
-- [ ] Focused tests
-- [ ] Relevant quality-gate commands
-- [ ] Manual acceptance, if required
+## Tests or checks
 
 ## Screenshots or curriculum QA
 
-Include only synthetic/public-safe evidence where relevant.
+Use synthetic/public-safe evidence only. State `N/A` where a section does not
+apply. Never include learner data, pasted JSON, audio, secrets, local databases,
+or private deployment information.

@@ -1,0 +1,20 @@
+name: Documentation improvement
+description: Suggest a clear, public-safe documentation correction or addition.
+title: 'docs: '
+labels: [documentation, good first issue]
+body:
+  - type: markdown
+    attributes:
+      value: 'Do not include personal paths, private deployment details, learner data, exports, or credentials.'
+  - type: textarea
+    id: problem
+    attributes:
+      label: What is unclear or missing?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-change
+    attributes:
+      label: Proposed wording or location
+    validations:
+      required: true
