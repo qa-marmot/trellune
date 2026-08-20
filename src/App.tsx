@@ -221,7 +221,7 @@ function Onboarding() {
 							setName(event.target.value);
 							setErrors((current) => ({ ...current, learnerName: '' }));
 						}}
-						placeholder={locale === 'ja' ? '例: Yabu' : 'For example: Alex'}
+						placeholder={locale === 'ja' ? '例: Alex' : 'For example: Alex'}
 						autoComplete="name"
 						aria-invalid={Boolean(errors.learnerName)}
 						aria-describedby="learner-name-help learner-name-error"

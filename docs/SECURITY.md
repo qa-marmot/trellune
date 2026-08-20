@@ -14,7 +14,7 @@ Deployment requirements:
 
 - protect both development and production hostnames with explicit allow policies;
 - disable the public `workers.dev` route and previews unless separately protected;
-- never set `ALLOW_LOCAL_AUTH=true` in a remote environment;
+- `ALLOW_LOCAL_AUTH=true` is accepted only for loopback (`localhost`, `127.0.0.1`, or `::1`) requests; never set it in a remote environment;
 - restrict Access and DNS changes to explicit human-approved actions;
 - test unauthenticated `401` and authorized access before declaring a release gate complete.
 

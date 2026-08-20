@@ -12,6 +12,14 @@ export interface LearnerIdentity {
 	accessSubject: string;
 }
 
+function isLoopbackRequest(request: Request): boolean {
+	try {
+		return ['localhost', '127.0.0.1', '[::1]'].includes(new URL(request.url).hostname);
+	} catch {
+		return false;
+	}
+}
+
 export function accessSubjectFromClaims(
 	claims: Record<string, unknown>,
 	nowSeconds = Math.floor(Date.now() / 1_000),
@@ -64,7 +72,7 @@ export async function authenticateLearner(
 		} catch {
 			return null;
 		}
-	} else if (environment.ALLOW_LOCAL_AUTH === 'true') {
+	} else if (environment.ALLOW_LOCAL_AUTH === 'true' && isLoopbackRequest(request)) {
 		subject = request.headers.get('x-english-os-local-user')?.trim() || 'local-development-only';
 	}
 

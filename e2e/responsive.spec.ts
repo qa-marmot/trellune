@@ -10,7 +10,7 @@ for (const width of widths) {
 				'english-os-state-v1',
 				JSON.stringify({
 					onboarded: true,
-					learnerName: 'Yabu',
+					learnerName: 'Alex',
 					goal: '身近な話題で10分話す',
 					dailyMinutes: 20,
 					currentDay: 1,

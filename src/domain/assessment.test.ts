@@ -141,7 +141,7 @@ describe('Stage Assessment domain', () => {
 			FOUNDATION_STAGE_ASSESSMENT,
 			validAssessment.attemptId,
 			{
-				learnerName: 'Yabu',
+				learnerName: 'Alex',
 				goal: '英語で会議に参加する',
 				currentDay: 90,
 				completedDays: 90,
@@ -163,7 +163,7 @@ describe('Stage Assessment domain', () => {
 			INDEPENDENT_STAGE_ASSESSMENT,
 			validIndependentAssessment.attemptId,
 			{
-				learnerName: 'Yabu',
+				learnerName: 'Alex',
 				goal: '日常の意見交換を続ける',
 				currentDay: 180,
 				completedDays: 179,
@@ -191,7 +191,7 @@ describe('Stage Assessment domain', () => {
 			FLUENCY_STAGE_ASSESSMENT,
 			validFluencyAssessment.attemptId,
 			{
-				learnerName: 'Yabu',
+				learnerName: 'Alex',
 				goal: '長い会話を自然に続ける',
 				currentDay: 270,
 				completedDays: 269,
@@ -234,7 +234,7 @@ describe('Stage Assessment domain', () => {
 			GRADUATION_STAGE_ASSESSMENT,
 			validGraduationAssessment.attemptId,
 			{
-				learnerName: 'Yabu',
+				learnerName: 'Alex',
 				goal: '複雑な話題でも対話を続ける',
 				currentDay: 365,
 				completedDays: 364,
@@ -268,7 +268,7 @@ describe('Stage Assessment domain', () => {
 			INTEGRATED_GRADUATION_STAGE_ASSESSMENT,
 			validIntegratedGraduationAssessment.attemptId,
 			{
-				learnerName: 'Yabu',
+				learnerName: 'Alex',
 				goal: '複雑な話題を読み、書き、話して検討する',
 				currentDay: 365,
 				completedDays: 365,
