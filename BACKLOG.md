@@ -1,21 +1,40 @@
 # Backlog
 
-Status date: 2026-08-12. P0 = 0 and P1 = 0 for the local candidate. Detailed evidence and classifications are in `docs/remediation/REMAINING_P2_P3.md`.
+Status date: 2026-08-20. The post-v1.8 reliability review found no open P0 or
+P1 in the public source tree. Evidence and scope are recorded in
+[`docs/POST_V18_RELIABILITY_AUDIT.md`](docs/POST_V18_RELIABILITY_AUDIT.md).
 
-## P2
+## Deferred product work
 
-- Establish approved bundle/interaction/long-task budgets, then paginate or virtualize only the long lists that exceed them; capture low-tier physical-device Web Vitals separately.
-- Resolve the documented product gaps for self-assessment, editable timezone/display/local-notification settings and redacted diagnostics by implementation or an approved requirements change.
-- Complete the exact 8/3/1 three-path/race matrix, five-resend/disconnect ordering matrix and future/near-limit backup browser boundaries.
-- Collect current ChatGPT UI, physical iOS/Android, NVDA/manual contrast and authenticated deployed-environment evidence.
+These are product choices, not release blockers. They need a concrete learner
+need and acceptance criteria before implementation.
 
-## P3
+- Editable timezone/display preferences, local-notification policy, and a
+  privacy-preserving diagnostics export.
+- Measured pagination or virtualization only if a real device measurement shows
+  that the current Unit disclosure is insufficient for a long library/history.
+- A product decision on additional self-assessment workflows beyond the
+  existing stage assessments.
 
-- Improve computed Today workload copy.
-- Choose a release version instead of `0.0.0` during an approved versioning step.
-- Raise comfortable target sizes toward 44 px where layout permits.
-- Revisit dense rounded-surface styling after physical-device review.
-- Standardize remaining empty/search recovery actions.
-- Specify a stable SRS tie-break for equal due dates.
+## Manual-only verification
 
-No P0 or P1 item is intentionally deferred.
+The public test suite cannot replace these checks. Do not record learner data,
+tokens, or pasted conversation content as evidence.
+
+- Current third-party conversation-AI UI and copy/paste behavior.
+- Physical iOS and Android install/update/offline behavior.
+- NVDA or VoiceOver screen-reader walkthrough, manual contrast, and low-tier
+  device Web Vitals.
+- Approved authenticated deployment and recovery drill when a maintainer
+  authorizes a production release.
+
+## Completed through v1.8 / post-v1.8 review
+
+- Versioned releases replaced the historical `0.0.0` placeholder.
+- Core workload is computed from the current state and visible in Today.
+- Current-unit disclosure limits the 365-day curriculum journey without hiding
+  any lessons.
+- Equal-due SRS ordering is deterministic: due time, lapses, source type, then
+  card ID. Replay ordering uses timestamp then event ID.
+- Public-tree scanning, local-auth loopback hardening, i18n checks, public demo
+  coverage, and contributor documentation are maintained by automated checks.
