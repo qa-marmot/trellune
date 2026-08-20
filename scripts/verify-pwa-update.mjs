@@ -26,11 +26,14 @@ const contentTypes = new Map([
 let browser;
 let server;
 
-async function buildVersion(marker) {
+async function buildVersion(marker, { legacyClient = false } = {}) {
 	await build({
 		clearScreen: false,
 		logLevel: 'warn',
-		define: { 'import.meta.env.VITE_BUILD_MARKER': JSON.stringify(marker) },
+		define: {
+			'import.meta.env.VITE_BUILD_MARKER': JSON.stringify(marker),
+			'import.meta.env.VITE_PWA_TEST_LEGACY_CLIENT': JSON.stringify(String(legacyClient)),
+		},
 	});
 }
 
@@ -112,7 +115,7 @@ async function readPreservedState(page) {
 }
 
 try {
-	await buildVersion('pwa-build-a');
+	await buildVersion('pwa-legacy-build-a', { legacyClient: true });
 	server = createServer((request, response) => void serveCurrentBuild(request, response));
 	await new Promise((resolve, reject) => {
 		server.once('error', reject);
@@ -128,7 +131,7 @@ try {
 	});
 	browser = await chromium.launch({ channel: process.env.CI ? undefined : 'chrome' });
 	const context = await browser.newContext({ baseURL: origin, locale: 'ja-JP' });
-	const page = await context.newPage();
+	let page = await context.newPage();
 	await page.goto('/onboarding');
 	await page.getByLabel('呼ばれたい名前').fill('PWA Update Learner');
 	await page.getByRole('button', { name: /ベースラインへ/ }).click();
@@ -139,24 +142,41 @@ try {
 	await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
 	assert.equal(
 		await page.evaluate(() => globalThis.document.documentElement.dataset.buildMarker),
-		'pwa-build-a',
+		'pwa-legacy-build-a',
 	);
 	await setActiveCurriculumTotalDays(page, 270);
 	const preservedBeforeUpdate = await readPreservedState(page);
 	// Simulate a v1.7 learner: it has durable learner data but no UI-locale key.
 	await page.evaluate(() => globalThis.localStorage.removeItem('trellune.uiLocale.v1'));
 
+	// The legacy shell does not run the current proactive update checks. It must still
+	// preserve learner data across a normal close/reopen followed by the browser's
+	// registration update check; no storage, cache, or worker reset is used here.
+	await page.close();
+	page = await context.newPage();
 	await page.goto('/import');
+	await page.waitForFunction(
+		() => globalThis.document.documentElement.dataset.buildMarker === 'pwa-legacy-build-a',
+	);
 	const editor = page.getByLabel('会話AIが返したJSON');
 	await editor.fill('UNSAVED_PWA_UPDATE_INPUT');
 	await buildVersion('pwa-build-b');
-	await page.evaluate(() => globalThis.dispatchEvent(new globalThis.Event('online')));
+	await page.evaluate(async () => {
+		const registration = await navigator.serviceWorker.getRegistration();
+		if (!registration)
+			throw new Error('Expected the installed PWA to have a service worker registration.');
+		await registration.update();
+	});
+	await page.waitForFunction(async () => {
+		const registration = await navigator.serviceWorker.getRegistration();
+		return registration?.waiting?.state === 'installed';
+	});
 	const updateButton = page.getByRole('button', { name: '確認して更新' });
 	await updateButton.waitFor({ state: 'visible', timeout: 20_000 });
 	await page.waitForTimeout(500);
 	assert.equal(
 		await page.evaluate(() => globalThis.document.documentElement.dataset.buildMarker),
-		'pwa-build-a',
+		'pwa-legacy-build-a',
 	);
 	assert.equal(await editor.inputValue(), 'UNSAVED_PWA_UPDATE_INPUT');
 
@@ -165,7 +185,7 @@ try {
 	assert.equal(await editor.inputValue(), 'UNSAVED_PWA_UPDATE_INPUT');
 	assert.equal(
 		await page.evaluate(() => globalThis.document.documentElement.dataset.buildMarker),
-		'pwa-build-a',
+		'pwa-legacy-build-a',
 	);
 
 	page.once('dialog', (dialog) => dialog.accept());
@@ -185,8 +205,16 @@ try {
 	await page.goto('/curriculum');
 	await page.getByRole('heading', { name: '365日の地図' }).waitFor({ state: 'visible' });
 	assert.equal(await page.getByRole('alert').count(), 0);
+	await context.setOffline(true);
+	await page.reload();
+	await page.waitForFunction(
+		() => globalThis.document.documentElement.dataset.buildMarker === 'pwa-build-b',
+		undefined,
+		{ timeout: 20_000 },
+	);
+	await context.setOffline(false);
 	process.stdout.write(
-		'PWA build A→B proactive update, consent, IndexedDB preservation, legacy Japanese locale fallback, and ACTIVE 270 / AVAILABLE 365 compatibility test passed.\n',
+		'Legacy installed PWA A→B update detection, waiting-worker consent, IndexedDB preservation, offline reopen, legacy Japanese locale fallback, and ACTIVE 270 / AVAILABLE 365 compatibility test passed.\n',
 	);
 	await context.close();
 } finally {

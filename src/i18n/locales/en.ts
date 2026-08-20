@@ -26,6 +26,13 @@ export const en: Record<TranslationKey, string> = {
 	'update.apply': 'Review and update',
 	'update.unsavedConfirm':
 		'There is unsaved input on an import screen. Updating will discard it. Continue?',
+	'update.check': 'Check for updates',
+	'update.checking': 'Checking for an update…',
+	'update.ready': 'Your app is up to date.',
+	'update.offline': 'Connect to the internet to check for updates.',
+	'update.unsupported': 'Updates are unavailable in this browser session.',
+	'update.error':
+		'The update check could not finish. Your learning data is still safe on this device.',
 	'language.label': 'Display language',
 	'language.ja': '日本語',
 	'language.en': 'English',
@@ -155,6 +162,8 @@ export const en: Record<TranslationKey, string> = {
 	'settings.languageTitle': 'Display language',
 	'settings.languageDescription':
 		'This is a device-only preference. It never changes learning data or synced content.',
+	'settings.updates': 'App updates',
+	'settings.updatesDescription': 'Check for a new version without clearing your learning data.',
 	'settings.dailyMinutes': 'Daily target',
 	'settings.dailyMinutesDescription':
 		'Changes only the time estimate shown, not what Core requires.',

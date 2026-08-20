@@ -25,6 +25,12 @@ export const ja: Record<TranslationKey, string> = {
 	'update.apply': '確認して更新',
 	'update.unsavedConfirm':
 		'取込画面に未保存の入力があります。更新すると入力が失われます。更新しますか？',
+	'update.check': '更新を確認',
+	'update.checking': '更新を確認しています…',
+	'update.ready': 'このアプリは最新です。',
+	'update.offline': '更新を確認するにはインターネットへ接続してください。',
+	'update.unsupported': 'このブラウザセッションでは更新を確認できません。',
+	'update.error': '更新の確認を完了できませんでした。端末内の学習データは保持されています。',
 	'language.label': '表示言語',
 	'language.ja': '日本語',
 	'language.en': 'English',
@@ -150,6 +156,8 @@ export const ja: Record<TranslationKey, string> = {
 	'settings.languageTitle': '表示言語',
 	'settings.languageDescription':
 		'この端末だけで使う表示言語です。学習データや同期内容は変わりません。',
+	'settings.updates': 'アプリの更新',
+	'settings.updatesDescription': '学習データを削除せずに、新しいバージョンを確認します。',
 	'settings.dailyMinutes': '1日の目安',
 	'settings.dailyMinutesDescription': 'Coreの内容は変えず、表示する時間の目安だけ変更します。',
 	'settings.syncStatus': '同期状態',
