@@ -1,0 +1,6 @@
+# A service-worker script must be fetched directly and revalidated. Hashed app
+# assets keep Cloudflare Workers Static Assets' normal cache policy.
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Service-Worker-Allowed: /
+  X-Content-Type-Options: nosniff
