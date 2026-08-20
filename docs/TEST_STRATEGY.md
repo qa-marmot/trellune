@@ -2,7 +2,7 @@
 
 Stage Assessmentは、runtime/published schema parity、definition別required skills、単一JSON候補の厳格解析、IndexedDBの冪等性、sync outbox経路、backup v2 lossless round-trip、D1 fresh/upgrade migration parity、Worker CAS/replay/stale拒否、および1本のPlaywright copy/preview/import/reload flowで検証する。画面テストはどのresultからもCoreへ戻れることも確認する。
 
-最終更新: 2026-08-06
+最終更新: 2026-08-20
 
 ## 1. 目的
 
@@ -107,7 +107,7 @@ pnpm playwright test
 9. onboardingの空欄/IANAエラー、履歴filter/deep link、アプリ内reduced motion、端末削除の二段階確認、削除後再読込、通信中のremote pullより端末削除が優先されること。
 10. 未取得URLをofflineで開き、専用説明と取得済みTodayへの導線を確認する。
 11. normalized IndexedDBを逆順・重複/replay・skipped day付きで作り、実startup hydrationから履歴/分析/Core集計を再構築する。
-12. 1/7/30/90日fixtureでnavigation、FCP、ready、DOM、heap（取得可能時）、record数を記録する。承認されていない絶対閾値は追加しない。
+12. 1/7/30/90/365日fixtureでnavigation、FCP、ready、DOM、heap（取得可能時）、record数を記録する。承認されていない絶対閾値は追加しない。
 
 ## 6. アクセシビリティ検証
 

@@ -77,6 +77,21 @@ test('principal routes have no serious or critical axe violations', async ({ pag
 	}
 });
 
+test('English principal routes have no serious or critical axe violations', async ({ page }) => {
+	test.setTimeout(90_000);
+	await onboard(page);
+	await page.getByLabel('表示言語').selectOption('en');
+	await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+	for (const route of ['/today', '/grammar', '/curriculum', '/voice', '/backup', '/settings']) {
+		await page.goto(route);
+		const results = await new AxeBuilder({ page }).analyze();
+		const blockers = results.violations.filter((item) =>
+			['serious', 'critical'].includes(item.impact ?? ''),
+		);
+		expect(blockers, `${route} (en): ${blockers.map((item) => item.id).join(', ')}`).toEqual([]);
+	}
+});
+
 test('keyboard selection, skip navigation, route focus and completion names are exposed', async ({
 	page,
 }) => {

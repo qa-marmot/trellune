@@ -21,12 +21,12 @@ function metricValue(page: Page, label: string) {
 	return page.locator('.metric').filter({ hasText: label }).locator('strong');
 }
 
-test('measures real loadAppData hydration at 1/7/30/90-day volume without an arbitrary time threshold', async ({
+test('measures real loadAppData hydration at 1/7/30/90/365-day volume without an arbitrary time threshold', async ({
 	page,
 }, testInfo) => {
 	const measurements: LoadMeasurement[] = [];
 
-	for (const days of [1, 7, 30, 90] as const) {
+	for (const days of [1, 7, 30, 90, 365] as const) {
 		await test.step(`${days}-day normalized history`, async () => {
 			const fixture = buildHistoryFixture(days);
 			await seedHistoryFixture(page, fixture);
@@ -74,7 +74,7 @@ test('measures real loadAppData hydration at 1/7/30/90-day volume without an arb
 		});
 	}
 
-	console.info(`ENGLISH_OS_HISTORY_LOAD_METRICS ${JSON.stringify(measurements)}`);
+	console.info(`TRELLUNE_HISTORY_LOAD_METRICS ${JSON.stringify(measurements)}`);
 	await testInfo.attach('history-load-measurements.json', {
 		body: Buffer.from(JSON.stringify(measurements, null, 2)),
 		contentType: 'application/json',

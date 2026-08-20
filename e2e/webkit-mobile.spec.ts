@@ -38,6 +38,11 @@ function coreSession() {
 
 test.describe('WebKit mobile release coverage', () => {
 	test.skip(({ browserName }) => browserName !== 'webkit', 'Runs only in the WebKit project.');
+	// WebKit runs all four PWA onboarding flows in one browser process. Keep the
+	// isolated IndexedDB/service-worker setup serial so a slow browser startup
+	// cannot make a later flow time out before its onboarding transition.
+	test.describe.configure({ mode: 'serial' });
+	test.setTimeout(60_000);
 
 	test('onboards at 390px, persists Day 1, and keeps learning routes readable', async ({
 		page,

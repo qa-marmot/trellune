@@ -143,7 +143,7 @@ export function todayInTokyo(): string {
 }
 
 export function buildHistoryFixture(
-	days: 1 | 7 | 30 | 90,
+	days: 1 | 7 | 30 | 90 | 365,
 	options: { skippedStudyDays?: boolean } = {},
 ): HistoryFixture {
 	const today = todayInTokyo();
