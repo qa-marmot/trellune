@@ -22,6 +22,11 @@ Before any remote migration or deploy:
 5. Keep Cloudflare Access protecting any personal deployment; do not use it as a
    public demo.
 
+The deploy scripts upload Vite's generated Worker (`dist/english_os/index.js`)
+and client assets (`dist/client`), not the source entry point. They also retain
+remote variables so an operator-owned Access configuration is never removed as
+a side effect of a runtime upgrade.
+
 ## Operational boundaries
 
 - Never reset or recreate a remote learner database as a deployment shortcut.
