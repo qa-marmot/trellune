@@ -1,5 +1,5 @@
-name: Feature request
-description: Suggest a learner-centered improvement.
+name: Actionable improvement
+description: Propose a scoped, learner-centered improvement. Use Discussions for early ideas.
 title: 'idea: '
 labels: [enhancement]
 body:
@@ -14,6 +14,13 @@ body:
     id: proposal
     attributes:
       label: Proposal
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Smallest useful scope
+      description: 'Which screen, workflow, or contract changes? What should remain unchanged?'
     validations:
       required: true
   - type: checkboxes

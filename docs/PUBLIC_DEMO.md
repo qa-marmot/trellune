@@ -22,16 +22,20 @@ or learner account.
 3. Open one sample Reading/Writing Lab.
 4. Copy a conversation request; no provider browser automation is involved.
 5. Preview a fixture `SESSION_JSON` import with strict validation.
-6. Reset the synthetic local state.
+6. View the public GitHub repository from the demo banner.
+7. Reset the synthetic local state.
 
 ## Run or build
 
 ```bash
 pnpm dev:demo
 pnpm build:demo
+pnpm screenshots
 ```
 
 The separate `trellune-demo` Cloudflare Pages deployment publishes only the
 static `dist/client` output. It has no Worker or D1 binding. The banner labels
 the boundary and exposes reset plus the Reading/Writing sample; the Import route
 can load a synthetic `SESSION_JSON` fixture for strict preview/import testing.
+README evidence is regenerated from this isolated demo only; see
+[screenshot instructions](community/SCREENSHOTS.md).

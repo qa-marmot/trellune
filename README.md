@@ -1,41 +1,58 @@
 # Trellune
 
-[![PWA](https://img.shields.io/badge/PWA-offline--ready-6c5ce7)](#why-trellune)
-[![Conversation AI](https://img.shields.io/badge/conversation--AI-bring--your--own-ff8a3d)](docs/PROVIDER_INTEGRATION.md)
+**A local-first, 365-day English-learning PWA.**
 
-**A local-first, 365-day language-learning PWA for deliberate practice and conversation.**
+Trellune gives a learner a structured curriculum, spaced retrieval, grammar and
+vocabulary practice, reading and writing, feedback and retry, assessment, and
+learning history. It is **not another AI chat wrapper**: you bring the
+conversation AI you already use, copy a lesson request, and paste validated
+results back into the app. No AI API key is required.
 
-| Today                                                                                      | Grammar and practice                                                                 |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| ![Synthetic Trellune Day 1 Today screen](docs/assets/demo/today-day1.png)                  | ![Synthetic Trellune grammar practice screen](docs/assets/demo/grammar-practice.png) |
-| Conversation-AI request                                                                    | Progress and retrieval                                                               |
-| ![Synthetic Trellune conversation prompt screen](docs/assets/demo/conversation-prompt.png) | ![Synthetic Trellune progress screen](docs/assets/demo/progress-srs.png)             |
+[Try the demo](https://trellune-demo.pages.dev) · [See how it works](#how-it-works) ·
+[Run locally](#run-locally) · [Contribute](CONTRIBUTING.md)
 
-All screenshots use the resettable synthetic demo; they contain no learner data.
+| Today                                                                                                      | Grammar and practice                                                                              |
+| ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| ![Trellune Today screen in English, showing a synthetic Day 1 learner](docs/assets/demo/en/today-day1.png) | ![Trellune grammar-practice screen in English](docs/assets/demo/en/grammar-practice.png)          |
+| Conversation-AI request                                                                                    | Progress and retrieval                                                                            |
+| ![Trellune Conversation AI prompt screen in English](docs/assets/demo/en/conversation-prompt.png)          | ![Trellune progress and spaced-retrieval screen in English](docs/assets/demo/en/progress-srs.png) |
 
-Trellune combines spaced retrieval, Grammar transfer, productive Vocabulary,
-Reading/Writing Labs, authored feedback and retry, and a manual conversation-AI
-bridge. It requires no AI API key: copy a lesson request to the conversation AI
-you choose, then paste its `SESSION_JSON` into Trellune for strict local validation.
+All images are captured from the resettable synthetic demo. They contain no
+learner data, account information, production hostname, or private browser
+state. The product UI is English here; curriculum support content is currently
+Japanese-first. See the [Japanese README](README.ja.md) for Japanese UI images.
+
+## Why Trellune?
+
+- **365 days, intentionally bounded:** Four CEFR-informed stages—Foundation,
+  Independent, Fluency, and B2 Challenge. Days 366–540 remain intentionally
+  inactive.
+- **Local-first and offline-capable:** Learning data lives in IndexedDB; core
+  screens remain available after they have been cached.
+- **A complete practice loop:** Retrieval, grammar transfer, productive
+  vocabulary, Reading/Writing Labs, authored feedback, self-review, retry, and
+  authentic conversation are explicit steps.
+- **Bring your own conversation AI:** ChatGPT, Claude, Gemini, and a generic
+  manual copy/paste preset. Trellune does not call or automate provider APIs or
+  websites.
+- **Optional self-hosted sync:** A Cloudflare Worker and D1 deployment can sync
+  devices, but local learning never needs a Cloudflare account.
 
 > The curriculum is designed for sustained A1-to-B1+ progress and a spoken
 > B2-entry challenge. Completing Day 365 is not a CEFR certification. Any
 > graduation result is an evidence-based estimate, not a credential.
 
-## Why Trellune?
+## Try the synthetic demo
 
-- **365-day curriculum:** Four CEFR-informed stages—Foundation, Independent,
-  Fluency, and B2 Challenge—while Days 366–540 remain intentionally inactive.
-- **Local-first by default:** Learning data lives in IndexedDB and the app works
-  offline after its essential screens are cached.
-- **Bring your own conversation AI:** Manual copy/paste presets for ChatGPT,
-  Claude, Gemini, or a generic provider. The app does not call or automate any
-  provider API or website.
-- **A learning loop, not a chat wrapper:** Retrieval, transfer, production,
-  authored feedback, self-review, retry, spaced reuse, and authentic conversation
-  stay separate and explicit.
-- **Optional sync:** A self-hosted Cloudflare Worker and D1 deployment can sync
-  devices. Local learning never needs a Cloudflare account.
+[Open the Trellune demo](https://trellune-demo.pages.dev). It uses only
+resettable synthetic local data, has no sign-in, and never connects to D1 or the
+optional sync service. Start Day 1, open a Reading/Writing sample, copy a
+conversation request, preview a fixture import, or reset the synthetic state.
+
+If the project is useful, a [GitHub star](https://github.com/qa-marmot/trellune)
+helps other local-first language learners find it.
+
+## How it works
 
 ```mermaid
 flowchart LR
@@ -47,22 +64,18 @@ flowchart LR
   F --> G[Mistakes, SRS, and next retrieval]
 ```
 
-## Try the synthetic demo
+1. Trellune shows the next deliberate-practice task and tracks Core learning.
+2. You copy its provider-neutral lesson request into your normal conversation
+   AI chat. Send it as text first; start Voice only when appropriate.
+3. After the conversation, request `SESSION_JSON`, paste it into Trellune, and
+   review strict validation before anything is saved.
 
-[Open the Trellune demo](https://trellune-demo.pages.dev). It uses only
-resettable synthetic local data, has no sign-in, and does not connect to D1 or
-the optional sync service.
+The application is the trust boundary: malformed output, unknown fields, future
+days, and acquisition-limit violations are rejected locally. The ChatGPT preset
+has manual evidence; other presets remain explicitly unverified until a
+maintainer records their acceptance evidence.
 
-## Language support
-
-Trellune’s product UI is available in **Japanese** and **English**. The display
-language is a per-device preference and never changes learner data, sync, or
-JSON contracts. The 365-day curriculum’s support explanations and Japanese
-glosses are still Japanese-first; Trellune does not claim a fully multilingual
-curriculum yet. [Localization](docs/LOCALIZATION.md) explains the support
-matrix and how to contribute another UI locale.
-
-## Try it locally
+## Run locally
 
 ```bash
 git clone https://github.com/qa-marmot/trellune.git
@@ -75,23 +88,31 @@ pnpm dev
 ```
 
 Open the printed local URL and start Day 1. No Cloudflare login, remote database,
-or AI API key is needed. See [Local setup](docs/LOCAL_SETUP.md) for the safe
+or AI API key is needed. [Local setup](docs/LOCAL_SETUP.md) documents the safe
 reset boundary and optional self-hosted sync.
 
-## How the conversation bridge works
+## Contribute
 
-1. Choose a conversation-AI preset and copy the lesson request.
-2. Paste it into your provider's normal text conversation.
-3. Start Voice only if that provider and environment support it.
-4. Explicitly request `SESSION_JSON` after the conversation.
-5. Paste the JSON into Trellune and review strict validation before saving.
+There are small, useful paths for documentation, localization, provider
+verification, Safari/iPhone QA, accessibility, curriculum QA, application code,
+and sync/security-sensitive work. Start with the lightweight
+[contribution guide](CONTRIBUTING.md) and
+[first-contribution guide](docs/FIRST_CONTRIBUTION.md); both say exactly which
+files, knowledge, and checks are useful for each path.
 
-The application is the trust boundary: it rejects malformed output, unknown
-fields, future days, and acquisition-limit violations. ChatGPT is the manually
-verified preset; other presets remain explicitly unverified until a maintainer
-records their acceptance evidence. See [Provider integration](docs/PROVIDER_INTEGRATION.md).
+Open questions and ideas belong in [GitHub Discussions](https://github.com/qa-marmot/trellune/discussions).
+Specific, reproducible work belongs in [Issues](https://github.com/qa-marmot/trellune/issues).
 
-## Architecture and contracts
+## Language support
+
+Trellune’s product UI is available in **Japanese** and **English**. The display
+language is a per-device preference and never changes learner data, sync, or
+JSON contracts. The 365-day curriculum’s support explanations and Japanese
+glosses are still Japanese-first; Trellune does not claim a fully multilingual
+curriculum yet. [Localization](docs/LOCALIZATION.md) explains the support matrix
+and how to contribute another UI locale.
+
+## Architecture and stable contracts
 
 ```mermaid
 flowchart TB
@@ -109,21 +130,16 @@ optional Boost learning.
 
 ## Verify a change
 
+For a typical contribution, start with the fast local check:
+
 ```bash
-pnpm prompts:check
-pnpm docs:check-links
-pnpm public:check
-pnpm i18n:check
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm audit --prod
-pnpm test:d1:local
-pnpm test:pwa:update
-pnpm playwright test
+pnpm check:quick
 ```
+
+Run only the focused test for the area you changed. Before a runtime release or
+when a maintainer asks, use the full [test strategy](docs/TEST_STRATEGY.md),
+including D1, PWA, and browser coverage. Regenerate public screenshots with
+`pnpm screenshots`; they are always captured from the synthetic demo.
 
 ## Documentation
 
@@ -135,10 +151,9 @@ pnpm playwright test
 - [Architecture](docs/ARCHITECTURE.md)
 - [Security](docs/SECURITY.md)
 - [Contributing](CONTRIBUTING.md)
-- [Public-release checklist](docs/PUBLIC_RELEASE_CHECKLIST.md)
-- [Provider acceptance pack](docs/provider-acceptance/README.md)
-- [Launch copy](docs/LAUNCH.md)
-- [Localization](docs/LOCALIZATION.md)
+- [First contribution](docs/FIRST_CONTRIBUTION.md)
+- [Community and launch materials](docs/community/README.md)
+- [Roadmap](ROADMAP.md)
 
 ## License
 

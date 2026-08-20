@@ -59,6 +59,10 @@ safe generic message, never an internal key.
    values as part of a UI-only contribution without a separate compatibility
    design.
 
+For a small first contribution, see the [localization path in
+Contributing](../CONTRIBUTING.md#i-want-to) and run `pnpm i18n:check`. Screenshots
+for a locale contribution must use only the resettable synthetic demo.
+
 Translation values may use `{name}`-style interpolation. Do not concatenate
 translated fragments when a full sentence can be a single key.
 

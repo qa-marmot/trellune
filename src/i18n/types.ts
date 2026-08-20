@@ -32,6 +32,7 @@ export type TranslationKey =
 	| 'demo.reset'
 	| 'demo.resetting'
 	| 'demo.readingExample'
+	| 'demo.github'
 	| 'demo.curriculumNotice'
 	| 'update.available'
 	| 'update.apply'

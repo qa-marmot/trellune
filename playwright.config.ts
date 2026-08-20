@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const demoMode = process.env.VITE_DEMO_MODE === 'true';
+
 export default defineConfig({
 	testDir: './e2e',
 	fullyParallel: true,
@@ -27,7 +29,7 @@ export default defineConfig({
 		},
 	],
 	webServer: {
-		command: 'pnpm build && pnpm preview --host 127.0.0.1 --port 4173',
+		command: `${demoMode ? 'pnpm build:demo' : 'pnpm build'} && pnpm preview --host 127.0.0.1 --port 4173`,
 		url: 'http://127.0.0.1:4173',
 		reuseExistingServer: !process.env.CI,
 		timeout: 120_000,

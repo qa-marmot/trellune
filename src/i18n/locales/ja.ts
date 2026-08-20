@@ -19,6 +19,7 @@ export const ja: Record<TranslationKey, string> = {
 	'demo.reset': '合成データをリセット',
 	'demo.resetting': 'リセット中…',
 	'demo.readingExample': 'Reading/Writing の例へ',
+	'demo.github': 'GitHubで見る',
 	'demo.curriculumNotice': '一部のカリキュラム支援コンテンツは現在、日本語を主にしています。',
 	'update.available': '新しいバージョンを利用できます。',
 	'update.apply': '確認して更新',

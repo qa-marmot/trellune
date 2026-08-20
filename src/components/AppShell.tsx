@@ -118,6 +118,14 @@ export function AppShell({ children }: PropsWithChildren) {
 					>
 						{t('demo.readingExample')}
 					</button>
+					<a
+						className="button"
+						href="https://github.com/qa-marmot/trellune"
+						target="_blank"
+						rel="noreferrer"
+					>
+						{t('demo.github')}
+					</a>
 					<small>{t('demo.curriculumNotice')}</small>
 				</div>
 			) : null}
