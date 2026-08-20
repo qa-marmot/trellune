@@ -141,6 +141,11 @@ when a maintainer asks, use the full [test strategy](docs/TEST_STRATEGY.md),
 including D1, PWA, and browser coverage. Regenerate public screenshots with
 `pnpm screenshots`; they are always captured from the synthetic demo.
 
+Pull requests and pushes to `main` run [CI](.github/workflows/ci.yml) for
+documentation and i18n checks, formatting, linting, type checking, unit tests,
+the production build and dependency audit, local D1 integration, PWA updates,
+and Playwright Chromium/WebKit coverage.
+
 ## Documentation
 
 - [Japanese README](README.ja.md)
