@@ -118,4 +118,3 @@ D1 integration、PWA update、Playwright Chromium/WebKit を検証します。
 
 Trellune、ドキュメント、著者作成のカリキュラムは [MIT License](LICENSE) で公開します。
 第三者パッケージは各著作者のライセンスに従います。
-
