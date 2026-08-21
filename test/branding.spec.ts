@@ -22,4 +22,3 @@ describe('public Trellune brand with legacy data compatibility', () => {
 		expect(demo).toContain("isDemoMode\n\t? 'trellune-demo-state-v1'\n\t: 'english-os-state-v1'");
 	});
 });
-
