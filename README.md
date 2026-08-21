@@ -165,4 +165,3 @@ and Playwright Chromium/WebKit coverage.
 Trellune, its documentation, and its authored curriculum are available under
 the [MIT License](LICENSE). Third-party package licenses remain those of their
 respective authors.
-
