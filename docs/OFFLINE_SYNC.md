@@ -48,4 +48,3 @@ Stage Assessment uses the existing `assessment` sync entity under protocol versi
 ## Privacy
 
 The original pasted text may remain in a local draft so invalid input is not lost, but is not sent to D1. The API receives only validated structured JSON plus a SHA-256 hash used for duplicate prevention. Never place pasted learner data, IndexedDB exports, or local D1 files in Git.
-
