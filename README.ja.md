@@ -110,7 +110,12 @@ pnpm check:quick
 
 公開用スクリーンショットは `pnpm screenshots` で合成デモから再生成できます。
 
+Pull Request と `main` への push では、[CI](.github/workflows/ci.yml) がドキュメント・
+i18n、format、lint、typecheck、unit test、production build と dependency audit、local
+D1 integration、PWA update、Playwright Chromium/WebKit を検証します。
+
 ## ライセンス
 
 Trellune、ドキュメント、著者作成のカリキュラムは [MIT License](LICENSE) で公開します。
 第三者パッケージは各著作者のライセンスに従います。
+
