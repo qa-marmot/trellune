@@ -29,6 +29,7 @@ let server;
 async function buildVersion(marker, { legacyClient = false } = {}) {
 	await build({
 		clearScreen: false,
+		configLoader: 'runner',
 		logLevel: 'warn',
 		define: {
 			'import.meta.env.VITE_BUILD_MARKER': JSON.stringify(marker),
@@ -161,6 +162,21 @@ try {
 	const editor = page.getByLabel('会話AIが返したJSON');
 	await editor.fill('UNSAVED_PWA_UPDATE_INPUT');
 	await buildVersion('pwa-build-b');
+	const serviceWorkerResponse = await page.evaluate(async () => {
+		const response = await fetch('/sw.js', { cache: 'no-store', redirect: 'follow' });
+		return {
+			bodyStart: (await response.text()).slice(0, 80),
+			contentType: response.headers.get('content-type'),
+			redirected: response.redirected,
+			status: response.status,
+			url: response.url,
+		};
+	});
+	assert.equal(serviceWorkerResponse.status, 200);
+	assert.equal(serviceWorkerResponse.redirected, false);
+	assert.equal(new URL(serviceWorkerResponse.url).pathname, '/sw.js');
+	assert.match(serviceWorkerResponse.contentType ?? '', /(?:text|application)\/javascript/iu);
+	assert.doesNotMatch(serviceWorkerResponse.bodyStart, /<!doctype html|<html/iu);
 	await page.evaluate(async () => {
 		const registration = await navigator.serviceWorker.getRegistration();
 		if (!registration)
@@ -214,11 +230,11 @@ try {
 	);
 	await context.setOffline(false);
 	process.stdout.write(
-		'Legacy installed PWA A→B update detection, waiting-worker consent, IndexedDB preservation, offline reopen, legacy Japanese locale fallback, and ACTIVE 270 / AVAILABLE 365 compatibility test passed.\n',
+		'Legacy installed PWA A→B direct service-worker fetch, update detection, waiting-worker consent, IndexedDB preservation, offline reopen, legacy Japanese locale fallback, and ACTIVE 270 / AVAILABLE 365 compatibility test passed.\n',
 	);
 	await context.close();
 } finally {
 	await browser?.close();
 	if (server) await new Promise((resolve) => server.close(resolve));
-	await build({ clearScreen: false, logLevel: 'warn' });
+	await build({ clearScreen: false, configLoader: 'runner', logLevel: 'warn' });
 }

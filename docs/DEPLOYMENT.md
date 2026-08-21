@@ -27,6 +27,22 @@ and client assets (`dist/client`), not the source entry point. They also retain
 remote variables so an operator-owned Access configuration is never removed as
 a side effect of a runtime upgrade.
 
+## Service worker behind Cloudflare Access
+
+Browsers reject a service-worker script when its update request follows any
+redirect. If a self-hosted deployment protects the whole hostname with
+Cloudflare Access, the operator must create a separate, more-specific Access
+application for the exact `/sw.js` path with a narrowly scoped **Bypass / Everyone**
+policy. The parent application must continue to protect the rest of the host,
+including the SPA, `/api/*`, sync endpoints and learner data.
+
+This exception exposes only the generated service-worker JavaScript. The
+checked-in `_headers` rule makes that script revalidate directly and preserves
+normal caching for hashed JavaScript and CSS assets. Before accepting a deploy,
+verify from an unauthenticated client that `/sw.js` returns `200`, does not
+redirect, has a JavaScript `Content-Type`, and is not the Access login page or
+SPA fallback. Do not broaden the bypass to `/*` or `/api/*`.
+
 ## Operational boundaries
 
 - Never reset or recreate a remote learner database as a deployment shortcut.
