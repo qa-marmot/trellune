@@ -10,6 +10,15 @@ async function onboard(page: Page): Promise<void> {
 	await expect(page).toHaveURL(/\/today$/u);
 }
 
+async function onboardEnglish(page: Page): Promise<void> {
+	await page.addInitScript(() => localStorage.setItem('trellune.uiLocale.v1', 'en'));
+	await page.goto('/onboarding');
+	await page.getByLabel('What should we call you?').fill('WebKit English learner');
+	await page.getByRole('button', { name: 'Continue to baseline' }).click();
+	await page.getByRole('button', { name: 'Start Day 1 (skip for now)' }).click();
+	await expect(page).toHaveURL(/\/today$/u);
+}
+
 function coreSession() {
 	return {
 		schemaVersion: '1.0',
@@ -181,5 +190,20 @@ test.describe('WebKit mobile release coverage', () => {
 		});
 		await page.goto('/today');
 		await expect(page.getByText('DAY 02 · WEEK 1')).toBeVisible();
+	});
+});
+
+test.describe('WebKit English learning support', () => {
+	test.skip(({ browserName }) => browserName !== 'webkit', 'Runs only in the WebKit project.');
+
+	test('renders Day 365 without CJK fallback', async ({ page }) => {
+		await onboardEnglish(page);
+		await page.goto('/curriculum/365');
+		await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+		await expect(page.getByRole('heading', { level: 1 })).toContainText('Day 365');
+		expect(await page.locator('main').innerText()).not.toMatch(/[ぁ-んァ-ン一-龯]/u);
+		expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(
+			await page.evaluate(() => document.documentElement.clientWidth),
+		);
 	});
 });

@@ -6,7 +6,7 @@
 
 | 機能            | 使う場所                                                      | 役割                                                                                                    | Trelluneへの取込                                                                                          |
 | --------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| ChatGPT Project | `Trellune` Project内のチャット                                | Project instructionsと7つのProject Sourcesを共有し、Core Voice、Boost、各Assessmentを再現可能に実施する | Core/BoostはSESSION_JSON、Stage AssessmentはASSESSMENT_JSON、ベースラインは専用JSONとして検証後に取り込む |
+| ChatGPT Project | `Trellune` Project内のチャット                                | Project instructionsと8つのProject Sourcesを共有し、Core Voice、Boost、各Assessmentを再現可能に実施する | Core/BoostはSESSION_JSON、Stage AssessmentはASSESSMENT_JSON、ベースラインは専用JSONとして検証後に取り込む |
 | Study Mode      | Project外の通常チャット                                       | `LEARNER_CONTEXT`を使い、質問中心で文法・理解・発話を補助する                                           | 取り込まない。Core/Boost完了や連続日数を変更しない                                                        |
 | Voice           | Core/Boost用Projectチャットで、テキストプロンプト送信後に開始 | 実際の音声会話を行う                                                                                    | Voice終了後、同じチャットでSESSION_JSONを明示要求する                                                     |
 | Scheduled Task  | ChatGPTの通常チャットまたはScheduled画面                      | Trelluneを開く時刻を通知する                                                                            | 通知だけ。Project Sources、学習状態、Core/Boost、JSON、同期を扱わない                                     |
@@ -46,7 +46,7 @@ Project instructionsはこのProject内だけに適用されます。Project外�
 ## 3. Project Sourcesを追加する
 
 1. Project画面の「Add files」「Sources」またはクリップのアイコンを選びます。
-2. 次の7ファイルをまとめて選びます。
+2. 次の8ファイルをまとめて選びます。
    - `01-learner-profile.md`
    - `02-coaching-policy.md`
    - `03-curriculum.md`
@@ -54,7 +54,8 @@ Project instructionsはこのProject内だけに適用されます。Project外�
    - `05-session-schema.json`
    - `06-boost-study-policy.md`
    - `07-prompt-contract.md`
-3. アップロード完了表示を待ち、7件すべてのファイル名がProject Sourcesに見えることを確認します。
+   - `08-session-schema-1.1.json`
+3. アップロード完了表示を待ち、8件すべてのファイル名がProject Sourcesに見えることを確認します。
 4. アップロードに失敗したファイルだけを再選択します。同名の重複ができた場合は古い方を削除し、各1件にします。
 
 過去の学習チャット、SESSION_JSON、バックアップ、メール、トークン、音声をProject Sourcesへ追加しません。
@@ -63,7 +64,7 @@ Project instructionsはこのProject内だけに適用されます。Project外�
 
 1. Project内で新しいテキストチャットを作ります。
 2. `設定確認だけを行います。Project instructionsの役割、参照できるProject Sourcesのファイル名、CoreとBoostの違いを簡潔に答えてください。SESSION_JSONは出力しないでください。` と送ります。
-3. Project instructionsと7ファイルを参照でき、CoreとBoostを分離して説明することを確認します。
+3. Project instructionsと8ファイルを参照でき、CoreとBoostを分離して説明することを確認します。
 4. 「外部APIで自動連携する」「BoostでCoreを完了できる」「Study ModeをこのProject内で開始する」と提案した場合は会話を止め、Project instructionsとProject Sourcesを再確認します。
 5. この確認チャットには実名、メール、秘密情報、実学習データを貼り付けません。
 

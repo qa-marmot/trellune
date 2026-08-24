@@ -45,6 +45,59 @@ afterEach(async () => {
 });
 
 describe('session import review cards', () => {
+	it('stores English 1.1 content only in neutral local fields', async () => {
+		const sessionId = 'c440bec0-4444-4aaa-8aaa-000000000003';
+		const payload = {
+			schemaVersion: '1.1' as const,
+			supportLanguage: 'en' as const,
+			sessionId,
+			sessionType: 'core' as const,
+			curriculumDay: 1,
+			occurredAt: `${today}T09:00:00+09:00`,
+			durationMinutes: 10,
+			boost: null,
+			summary: 'Practised a clear introduction.',
+			evaluation: {
+				taskCompletion: 4,
+				grammar: 4,
+				vocabulary: 4,
+				fluency: 4,
+				interaction: 4,
+				comment: 'Clear and concise.',
+			},
+			mistakes: [],
+			newVocabulary: [
+				{
+					text: 'clarify',
+					meaning: 'to make something easier to understand',
+					example: 'Could you clarify that point?',
+				},
+			],
+			newPhrases: [],
+			previewGrammar: [],
+			reviewCards: [],
+		};
+		await expect(
+			persistImportedSession({
+				sessionId,
+				kind: 'core',
+				completedAt: now,
+				durationMinutes: 10,
+				summary: payload.summary,
+				score: 80,
+				mistakes: [],
+				payload,
+			}),
+		).resolves.toBe('created');
+		const stored = await db.sessions.get(sessionId);
+		expect(stored?.payload).toEqual(payload);
+		expect(JSON.stringify(stored?.payload)).not.toMatch(/"\w+Ja"/u);
+		await expect(db.learningItems.get(`${sessionId}:vocabulary:0`)).resolves.toMatchObject({
+			meaning: 'to make something easier to understand',
+			supportLanguage: 'en',
+		});
+	});
+
 	it('stores a review card linked to an imported mistake', async () => {
 		const sessionId = 'c440bec0-4444-4aaa-8aaa-000000000002';
 		const payload = {

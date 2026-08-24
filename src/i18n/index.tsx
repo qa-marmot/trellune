@@ -17,6 +17,7 @@ import {
 	type TranslationKey,
 	type TranslationParams,
 } from './types';
+import { getLearningSupportCatalog, type LearningSupportCatalog } from './learningSupport';
 
 export { SUPPORTED_LOCALES, type SupportedLocale, type TranslationKey } from './types';
 
@@ -138,4 +139,13 @@ export function useLocale(): LocaleContextValue {
 	const value = useContext(LocaleContext);
 	if (!value) throw new Error('useLocale must be used inside LocaleProvider');
 	return value;
+}
+
+/**
+ * Stage B intentionally follows the device UI language while keeping learner
+ * support as a separate concept from synchronized application state.
+ */
+export function useLearningSupport(): LearningSupportCatalog {
+	const { locale } = useLocale();
+	return useMemo(() => getLearningSupportCatalog(locale), [locale]);
 }

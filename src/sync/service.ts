@@ -14,7 +14,7 @@ import {
 } from '../curriculum/availability';
 import {
 	BaselineAssessmentSchema,
-	ChatGptSessionSchema,
+	ExternalSessionJsonSchema,
 	WeeklyAssessmentSchema,
 } from '../lib/schemas';
 import { StageAssessmentSchema } from '../domain/assessment';
@@ -555,7 +555,7 @@ function assertRemotePayloadWithinActiveCurriculum(
 		assertDay(LearningEventPayloadSchema.parse(payload).curriculumDay);
 	} else if (entityType === 'session') {
 		const session = SessionPayloadSchema.parse(payload);
-		if (session.payload) assertDay(ChatGptSessionSchema.parse(session.payload).curriculumDay);
+		if (session.payload) assertDay(ExternalSessionJsonSchema.parse(session.payload).curriculumDay);
 	} else if (entityType === 'review-event') {
 		assertDay(ReviewEventPayloadSchema.parse(payload).curriculumDay);
 	} else if (entityType === 'grammar-progress') {
@@ -735,7 +735,12 @@ async function applyRemoteEntity(
 	} else if (entity.entityType === 'mistake') {
 		await db.mistakes.put(MistakePayloadSchema.parse(payload));
 	} else if (entity.entityType === 'learning-item') {
-		await db.learningItems.put(LearningItemPayloadSchema.parse(payload));
+		const item = LearningItemPayloadSchema.parse(payload);
+		await db.learningItems.put({
+			...item,
+			meaning: item.meaning ?? item.meaningJa ?? '',
+			supportLanguage: item.supportLanguage ?? 'ja',
+		});
 	} else if (entity.entityType === 'acquisition-event') {
 		await db.acquisitionEvents.put(AcquisitionEventPayloadSchema.parse(payload));
 	} else if (entity.entityType === 'review-card') {
@@ -834,7 +839,7 @@ async function pushOutboxRecord(
 	}
 	if (record.entityType === 'session') {
 		const session = SessionPayloadSchema.parse(record.payload);
-		const payload = ChatGptSessionSchema.parse(session.payload);
+		const payload = ExternalSessionJsonSchema.parse(session.payload);
 		const profile = ProfileSettingsPayloadSchema.shape.profile.parse(
 			await db.learnerProfiles.get(CURRENT_ID),
 		);

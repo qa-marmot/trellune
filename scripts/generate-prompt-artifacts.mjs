@@ -5,6 +5,7 @@ import { createServer } from 'vite';
 
 const server = await createServer({
 	appType: 'custom',
+	configLoader: 'runner',
 	logLevel: 'silent',
 	server: { middlewareMode: true },
 });
@@ -41,6 +42,7 @@ try {
 		'next_lesson_preview',
 		'free_talk',
 	];
+	const englishContext = { ...context, supportLanguage: 'en' };
 	const artifacts = new Map([
 		['DAILY_CORE_PROMPT_TEMPLATE.txt', prompts.buildCorePrompt(context)],
 		[
@@ -62,6 +64,29 @@ try {
 				['{{GRAMMAR}}'],
 				['{{PHRASES}}'],
 				['{{REPEATED_MISTAKES}}'],
+			),
+		],
+		['DAILY_CORE_PROMPT_TEMPLATE_EN.txt', prompts.buildCorePrompt(englishContext)],
+		[
+			'BOOST_PROMPT_TEMPLATES_EN.txt',
+			[5, 15, 30, 60]
+				.flatMap((duration) =>
+					boostModes.map((mode) => prompts.buildBoostPrompt(englishContext, duration, mode)),
+				)
+				.join('\n\n----- NEXT BOOST VARIANT -----\n\n'),
+		],
+		['STUDY_MODE_INITIAL_PROMPT_EN.txt', prompts.buildStudyContext(englishContext)],
+		['BASELINE_ASSESSMENT_PROMPT_EN.txt', prompts.buildBaselinePrompt('{{LEARNER_NAME}}', 'en')],
+		[
+			'WEEKLY_ASSESSMENT_PROMPT_EN.txt',
+			prompts.buildWeeklyPrompt(
+				'{{START_DAY}}',
+				'{{END_DAY}}',
+				['{{WEEK_OBJECTIVES}}'],
+				['{{GRAMMAR}}'],
+				['{{PHRASES}}'],
+				['{{REPEATED_MISTAKES}}'],
+				'en',
 			),
 		],
 	]);

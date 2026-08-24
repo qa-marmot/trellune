@@ -1,0 +1,9 @@
+Trellune WEEKLY ASSESSMENT
+
+Range: Day {{START_DAY}}–{{END_DAY}}
+Objectives: ["{{WEEK_OBJECTIVES}}"]
+Grammar studied: ["{{GRAMMAR}}"]
+Phrases studied: ["{{PHRASES}}"]
+Repeated mistakes: ["{{REPEATED_MISTAKES}}"]
+
+Assess only this range for 8–10 minutes, one question at a time. Finish with five scores from 1 to 5, concise evidence, one strength to maintain, and one priority for next week. Weekly assessment does not change Core completion and must not generate SESSION_JSON.

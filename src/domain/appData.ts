@@ -39,7 +39,8 @@ export interface LearningItemView {
 	id: string;
 	kind: 'vocabulary' | 'phrase';
 	displayText: string;
-	meaningJa: string;
+	meaning: string;
+	supportLanguage: 'ja' | 'en';
 	status: 'new' | 'learning' | 'learned' | 'previewed';
 }
 

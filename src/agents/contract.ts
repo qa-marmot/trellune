@@ -25,9 +25,11 @@ export type ConversationCapabilities = z.infer<typeof ConversationCapabilitiesSc
 export interface ConversationProviderPreset {
 	readonly id: ConversationProviderId;
 	readonly label: string;
+	readonly labelEn: string;
 	readonly testedStatus: 'tested' | 'unverified';
 	readonly capabilities: ConversationCapabilities;
 	readonly setupNoteJa: string;
+	readonly setupNoteEn: string;
 }
 
 const tested = 'tested' as const;
@@ -42,6 +44,7 @@ export const CONVERSATION_PROVIDER_PRESETS: readonly ConversationProviderPreset[
 	{
 		id: 'chatgpt',
 		label: 'ChatGPT',
+		labelEn: 'ChatGPT',
 		testedStatus: 'tested',
 		capabilities: {
 			textConversation: tested,
@@ -52,10 +55,12 @@ export const CONVERSATION_PROVIDER_PRESETS: readonly ConversationProviderPreset[
 			fileContext: tested,
 		},
 		setupNoteJa: 'プロンプトをテキストで送信して内容を確認してから、Voiceを開始してください。',
+		setupNoteEn: 'Send the prompt as text and review the request before starting Voice.',
 	},
 	{
 		id: 'claude',
 		label: 'Claude',
+		labelEn: 'Claude',
 		testedStatus: 'unverified',
 		capabilities: {
 			textConversation: unverified,
@@ -67,10 +72,13 @@ export const CONVERSATION_PROVIDER_PRESETS: readonly ConversationProviderPreset[
 		},
 		setupNoteJa:
 			'通常のテキスト会話へプロンプトを貼り付けます。音声やJSONの利用可否は利用中の環境で確認してください。',
+		setupNoteEn:
+			'Paste the prompt into a normal text conversation. Confirm voice and JSON support in your current environment.',
 	},
 	{
 		id: 'gemini',
 		label: 'Gemini',
+		labelEn: 'Gemini',
 		testedStatus: 'unverified',
 		capabilities: {
 			textConversation: unverified,
@@ -82,10 +90,13 @@ export const CONVERSATION_PROVIDER_PRESETS: readonly ConversationProviderPreset[
 		},
 		setupNoteJa:
 			'通常のテキスト会話へプロンプトを貼り付けます。音声やJSONの利用可否は利用中の環境で確認してください。',
+		setupNoteEn:
+			'Paste the prompt into a normal text conversation. Confirm voice and JSON support in your current environment.',
 	},
 	{
 		id: 'generic',
 		label: 'その他の会話AI',
+		labelEn: 'Other Conversation AI',
 		testedStatus: 'unverified',
 		capabilities: {
 			textConversation: unverified,
@@ -97,6 +108,8 @@ export const CONVERSATION_PROVIDER_PRESETS: readonly ConversationProviderPreset[
 		},
 		setupNoteJa:
 			'テキスト会話へそのまま貼り付けます。Voice対応は事前に確認し、未対応ならCore Voiceの代替とは扱いません。',
+		setupNoteEn:
+			'Paste the prompt into a text conversation. Check voice support first; an unsupported provider is not a substitute for Core Voice.',
 	},
 ]);
 
@@ -113,6 +126,7 @@ const requiredText = (maximum: number) => z.string().trim().min(1).max(maximum);
 export const LearningConversationRequestSchema = z
 	.object({
 		contractVersion: z.literal(LEARNING_CONVERSATION_CONTRACT_VERSION),
+		supportLanguage: z.enum(['ja', 'en']).default('ja'),
 		sessionType: z.enum(['core', 'boost']),
 		curriculumDay: z.number().int().min(1).max(AVAILABLE_CURRICULUM_TOTAL_DAYS),
 		theme: requiredText(300),
@@ -131,7 +145,7 @@ export const LearningConversationRequestSchema = z
 		outputContract: z
 			.object({
 				name: z.literal('SESSION_JSON'),
-				schemaVersion: z.literal('1.0'),
+				schemaVersion: z.enum(['1.0', '1.1']),
 				instruction: requiredText(1_000),
 			})
 			.strict(),
@@ -154,9 +168,21 @@ export const LearningConversationRequestSchema = z
 		}
 	});
 
-export type LearningConversationRequest = z.infer<typeof LearningConversationRequestSchema>;
+export type LearningConversationRequest = z.input<typeof LearningConversationRequestSchema>;
 
-function providerWorkflowNote(preset: ConversationProviderPreset): string {
+function providerWorkflowNote(
+	preset: ConversationProviderPreset,
+	supportLanguage: 'ja' | 'en',
+): string {
+	if (supportLanguage === 'en') {
+		const voiceNote =
+			preset.capabilities.voiceConversation === 'tested'
+				? 'Voice support is verified for this preset. Start Voice after sending the text prompt.'
+				: preset.capabilities.voiceConversation === 'unverified'
+					? 'Voice support is unverified. Confirm it in your environment; otherwise do not treat it as a substitute for Core Voice.'
+					: 'Voice is not assumed for this preset. Do not treat it as a substitute for Core Voice.';
+		return `MANUAL_PROVIDER_WORKFLOW\npreset: ${preset.labelEn}\nstatus: ${preset.testedStatus}\n${preset.setupNoteEn}\n${voiceNote}\nTrellune never sends data to an external AI automatically.`;
+	}
 	const voiceNote =
 		preset.capabilities.voiceConversation === 'tested'
 			? 'Voice対応はこのプリセットで確認済みです。テキスト送信後にVoiceを開始してください。'
@@ -178,8 +204,13 @@ export function renderLearningConversationPrompt(
 	// external boundaries. Keeping this renderer structural also lets the
 	// checked-in prompt artifacts use their explicit placeholder tokens.
 	const parsed = request;
+	const supportLanguage = parsed.supportLanguage ?? 'ja';
 	const boost = parsed.boost
 		? `\nboostDuration: ${parsed.boost.duration}\nboostMode: ${parsed.boost.mode}`
 		: '';
-	return `Trellune LEARNING CONVERSATION\n\n${providerWorkflowNote(preset)}\n\nLEARNING_CONVERSATION_REQUEST\ncontractVersion: ${parsed.contractVersion}\nsessionType: ${parsed.sessionType}\ncurriculumDay: ${parsed.curriculumDay}\ntheme: ${parsed.theme}\nobjective: ${parsed.objective}\ngrammar: ${parsed.grammar.title} — ${parsed.grammar.focus}\nvoiceTask: ${parsed.voiceTask}${boost}\n\nVOICE_COACHING\n${parsed.coaching}\n\n${parsed.learnerContext}\n\nOUTPUT_REQUEST\n${parsed.outputContract.instruction}\n\n${parsed.outputContract.name} ${parsed.outputContract.schemaVersion} 要求後はJSONを1個だけ出力してください。Trellune側の検証を通るまで取込成功と断言しないでください。観察していない内容、未来日の完了、新規項目の上限超過を補わないでください。`;
+	const finalInstruction =
+		supportLanguage === 'en'
+			? `After the learner requests ${parsed.outputContract.name} ${parsed.outputContract.schemaVersion}, output exactly one JSON object. Do not claim that import succeeded until Trellune validates it. Do not invent unobserved events, future-day completion, or new items beyond the stated limits.`
+			: `${parsed.outputContract.name} ${parsed.outputContract.schemaVersion} 要求後はJSONを1個だけ出力してください。Trellune側の検証を通るまで取込成功と断言しないでください。観察していない内容、未来日の完了、新規項目の上限超過を補わないでください。`;
+	return `Trellune LEARNING CONVERSATION\n\n${providerWorkflowNote(preset, supportLanguage)}\n\nLEARNING_CONVERSATION_REQUEST\ncontractVersion: ${parsed.contractVersion}\nsupportLanguage: ${supportLanguage}\nsessionType: ${parsed.sessionType}\ncurriculumDay: ${parsed.curriculumDay}\ntheme: ${parsed.theme}\nobjective: ${parsed.objective}\ngrammar: ${parsed.grammar.title} — ${parsed.grammar.focus}\nvoiceTask: ${parsed.voiceTask}${boost}\n\nVOICE_COACHING\n${parsed.coaching}\n\n${parsed.learnerContext}\n\nOUTPUT_REQUEST\n${parsed.outputContract.instruction}\n\n${finalInstruction}`;
 }

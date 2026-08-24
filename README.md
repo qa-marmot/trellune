@@ -19,8 +19,8 @@ results back into the app. No AI API key is required.
 
 All images are captured from the resettable synthetic demo. They contain no
 learner data, account information, production hostname, or private browser
-state. The product UI is English here; curriculum support content is currently
-Japanese-first. See the [Japanese README](README.ja.md) for Japanese UI images.
+state. The product UI and bundled learner support are English here. See the
+[Japanese README](README.ja.md) for Japanese UI images.
 
 ## Why Trellune?
 
@@ -105,12 +105,12 @@ Specific, reproducible work belongs in [Issues](https://github.com/qa-marmot/tre
 
 ## Language support
 
-Trellune’s product UI is available in **Japanese** and **English**. The display
-language is a per-device preference and never changes learner data, sync, or
-JSON contracts. The 365-day curriculum’s support explanations and Japanese
-glosses are still Japanese-first; Trellune does not claim a fully multilingual
-curriculum yet. [Localization](docs/LOCALIZATION.md) explains the support matrix
-and how to contribute another UI locale.
+Trellune’s product UI and all 365 days of bundled learner support are available
+in **Japanese** and **English**. The device language selects a matching support
+catalog without changing learner data, stable curriculum IDs, sync, or backup.
+Historical learner-authored/imported text remains in the language in which it
+was stored. [Localization](docs/LOCALIZATION.md) explains the support boundary
+and compatibility rules.
 
 ## Architecture and stable contracts
 
@@ -124,8 +124,10 @@ flowchart TB
   IDB <--> Sync[Optional self-hosted Worker + D1 sync]
 ```
 
-The stable contracts are `SESSION_JSON` 1.0, `ASSESSMENT_JSON` 1.0, backup v2,
-sync protocol v1, and Dexie v5. Required Core learning remains distinct from
+`SESSION_JSON` 1.0 remains accepted. English prompts may use the compatible,
+language-neutral `SESSION_JSON` 1.1 input contract, which is stored through
+additive neutral fields while legacy v1.0 payloads remain unchanged. `ASSESSMENT_JSON` 1.0, backup v2, sync protocol v1,
+and Dexie v5 remain unchanged. Required Core learning remains distinct from
 optional Boost learning.
 
 ## Verify a change
@@ -164,4 +166,4 @@ and Playwright Chromium/WebKit coverage.
 
 Trellune, its documentation, and its authored curriculum are available under
 the [MIT License](LICENSE). Third-party package licenses remain those of their
-respective authors.
+respective authors; see [third-party notices](THIRD_PARTY_NOTICES.md).

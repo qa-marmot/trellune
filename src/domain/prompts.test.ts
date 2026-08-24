@@ -102,4 +102,44 @@ describe('learning conversation prompt contracts', () => {
 		expect(weekly).toContain('学習済み表現');
 		expect(weekly).toContain('SESSION_JSONを生成しません');
 	});
+
+	it('renders an English-only Core contract using neutral SESSION_JSON 1.1 fields', () => {
+		const value = buildCorePrompt({
+			...context,
+			supportLanguage: 'en',
+			theme: 'Questions and word order',
+			objective: 'Ask a clear follow-up question.',
+			voiceTask: 'Continue a short conversation and ask for clarification.',
+			todayVocabulary: [{ text: 'clarify', meaning: 'make the meaning clearer' }],
+		});
+		expect(value).toContain('supportLanguage: en');
+		expect(value).toContain('SESSION_JSON 1.1');
+		expect(value).toContain('neutral fields summary/comment/meaning/note/explanation');
+		expect(value).not.toMatch(/[ぁ-んァ-ン一-龯]/u);
+	});
+
+	it('localizes baseline, weekly, Study, and Boost instructions for English support', () => {
+		const english = {
+			...context,
+			supportLanguage: 'en' as const,
+			theme: 'Everyday possessions',
+			objective: 'Describe what you have and ask a follow-up question.',
+			voiceTask: 'Continue a short conversation about useful objects.',
+			todayVocabulary: [{ text: 'bag', meaning: 'a container used to carry things' }],
+			nextGrammar: {
+				curriculumDay: 5,
+				topicId: 'd5-grammar',
+				title: 'Questions and word order',
+				focus: 'Keep the auxiliary before the subject.',
+			},
+		};
+		for (const value of [
+			buildBaselinePrompt('Learner', 'en'),
+			buildWeeklyPrompt(1, 7, ['Introduce yourself'], ['be'], ['Nice to meet you.'], [], 'en'),
+			buildStudyContext(english),
+			buildBoostPrompt(english, 15, 'next_lesson_preview'),
+		]) {
+			expect(value).not.toMatch(/[ぁ-んァ-ン一-龯]/u);
+		}
+	});
 });

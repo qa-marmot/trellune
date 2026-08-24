@@ -24,6 +24,8 @@
 
 - **365日カリキュラム:** Foundation / Independent / Fluency / B2 Challenge の4段階。
   Day 366–540は意図的に未開放です。
+- **日本語・英語の学習支援:** UIだけでなくDay 1〜365の説明、語義、練習、会話用
+  プロンプトを端末の表示言語に合わせます。言語変更で学習データやIDは変わりません。
 - **ローカル優先・オフライン対応:** 学習データはIndexedDBに保存され、取得済みの主要画面は
   オフラインでも利用できます。
 - **会話だけに依存しない学習ループ:** SRS、復習、文法、語彙、Reading/Writing、
@@ -99,7 +101,9 @@ AI APIキーはいりません。詳細は[ローカルセットアップ](docs/
 
 ## 契約とアーキテクチャ
 
-`SESSION_JSON` 1.0、`ASSESSMENT_JSON` 1.0、backup v2、sync protocol v1、Dexie v5は
+`SESSION_JSON` 1.0は引き続き受理します。英語プロンプトは後方互換な言語中立の
+`SESSION_JSON` 1.1を使用でき、既存の永続化形式へ正規化されます。`ASSESSMENT_JSON` 1.0、
+backup v2、sync protocol v1、Dexie v5は
 互換性を守る安定契約です。必須のCoreと任意のBoostは区別します。
 
 通常の変更は、まず高速なローカル確認から始められます。

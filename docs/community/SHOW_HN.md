@@ -27,6 +27,6 @@ The demo is resettable and synthetic: https://trellune-demo.pages.dev
 Source: https://github.com/qa-marmot/trellune
 
 It is not a claim that a 365-day path grants a CEFR certificate, and the
-curriculum’s support content is currently Japanese-first even though the UI also
+curriculum’s support content is available in Japanese and English, and the UI also
 supports English. I would value feedback on the local-first architecture, the
 manual provider bridge, and what would make the contributor path clearer.

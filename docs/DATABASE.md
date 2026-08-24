@@ -2,6 +2,8 @@
 
 ## Migration policy
 
+The current forward-only chain ends at `0013_language_neutral_session_support.sql`. Migration 0013 additively backfills neutral support-language columns while retaining the legacy `*_ja` columns and values for SESSION_JSON 1.0 and rollback readers. It does not change sync v1, backup v2, or Dexie v5.
+
 `migrations/0001_initial.sql` is the first forward-only D1 migration. The current local candidate continues through `0012_activate_b2_challenge_curriculum.sql`. Every schema change uses the next zero-padded number, preserves readable existing rows and includes an application compatibility path. Destructive production migration or any remote migration requires explicit human approval. SQL issued by application code uses complete fixed statements, `?` placeholders and `.bind(...)`; identifier arrays use a bound JSON value with `json_each`, and table variants are selected from closed allowlists rather than concatenated.
 
 ## Model

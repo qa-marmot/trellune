@@ -1,0 +1,245 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://schemas.example.com/trellune/session-import-1.1.json",
+	"title": "Trellune language-neutral session import",
+	"type": "object",
+	"additionalProperties": false,
+	"required": [
+		"schemaVersion",
+		"supportLanguage",
+		"sessionId",
+		"sessionType",
+		"curriculumDay",
+		"occurredAt",
+		"durationMinutes",
+		"boost",
+		"summary",
+		"evaluation",
+		"mistakes",
+		"newVocabulary",
+		"newPhrases",
+		"previewGrammar",
+		"reviewCards"
+	],
+	"properties": {
+		"schemaVersion": { "const": "1.1" },
+		"supportLanguage": { "enum": ["ja", "en"] },
+		"sessionId": {
+			"type": "string",
+			"format": "uuid",
+			"pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+		},
+		"sessionType": { "enum": ["core", "boost"] },
+		"curriculumDay": { "type": "integer", "minimum": 1, "maximum": 540 },
+		"occurredAt": { "type": "string", "format": "date-time" },
+		"durationMinutes": { "type": "integer", "minimum": 1, "maximum": 120 },
+		"boost": {
+			"oneOf": [
+				{ "type": "null" },
+				{
+					"type": "object",
+					"additionalProperties": false,
+					"required": ["duration", "mode"],
+					"properties": {
+						"duration": { "enum": [5, 15, 30, 60] },
+						"mode": {
+							"enum": [
+								"review_rescue",
+								"speaking_sprint",
+								"grammar_deep_dive",
+								"scenario_challenge",
+								"weakness_attack",
+								"next_lesson_preview",
+								"free_talk"
+							]
+						}
+					}
+				}
+			]
+		},
+		"summary": { "$ref": "#/$defs/text1000" },
+		"evaluation": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["taskCompletion", "grammar", "vocabulary", "fluency", "interaction", "comment"],
+			"properties": {
+				"taskCompletion": { "$ref": "#/$defs/score" },
+				"grammar": { "$ref": "#/$defs/score" },
+				"vocabulary": { "$ref": "#/$defs/score" },
+				"fluency": { "$ref": "#/$defs/score" },
+				"interaction": { "$ref": "#/$defs/score" },
+				"comment": { "$ref": "#/$defs/text500" }
+			}
+		},
+		"mistakes": { "type": "array", "maxItems": 20, "items": { "$ref": "#/$defs/mistake" } },
+		"newVocabulary": {
+			"type": "array",
+			"maxItems": 8,
+			"items": { "$ref": "#/$defs/learningItem" }
+		},
+		"newPhrases": {
+			"type": "array",
+			"maxItems": 3,
+			"items": { "$ref": "#/$defs/learningItem" }
+		},
+		"previewGrammar": {
+			"type": "array",
+			"maxItems": 1,
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["topicId", "title", "note", "status"],
+				"properties": {
+					"topicId": { "type": "string", "pattern": "^[a-z0-9-]{1,80}$" },
+					"title": { "$ref": "#/$defs/text120" },
+					"note": { "$ref": "#/$defs/text500" },
+					"status": { "const": "previewed" }
+				}
+			}
+		},
+		"reviewCards": {
+			"type": "array",
+			"maxItems": 20,
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"required": ["front", "back", "sourceMistakeIndex"],
+				"properties": {
+					"front": { "$ref": "#/$defs/text300" },
+					"back": { "$ref": "#/$defs/text500" },
+					"sourceMistakeIndex": { "type": ["integer", "null"], "minimum": 0 }
+				}
+			}
+		}
+	},
+	"$defs": {
+		"score": { "type": "integer", "minimum": 1, "maximum": 5 },
+		"text120": { "type": "string", "minLength": 1, "maxLength": 120, "pattern": ".*\\S.*" },
+		"text200": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": ".*\\S.*" },
+		"text300": { "type": "string", "minLength": 1, "maxLength": 300, "pattern": ".*\\S.*" },
+		"text500": { "type": "string", "minLength": 1, "maxLength": 500, "pattern": ".*\\S.*" },
+		"text1000": { "type": "string", "minLength": 1, "maxLength": 1000, "pattern": ".*\\S.*" },
+		"learningItem": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["text", "meaning", "example"],
+			"properties": {
+				"text": { "$ref": "#/$defs/text120" },
+				"meaning": { "$ref": "#/$defs/text200" },
+				"example": { "$ref": "#/$defs/text300" }
+			}
+		},
+		"mistake": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["category", "learnerSaid", "suggested", "explanation", "severity"],
+			"properties": {
+				"category": {
+					"enum": [
+						"grammar_tense",
+						"grammar_word_order",
+						"grammar_agreement",
+						"grammar_article",
+						"grammar_preposition",
+						"vocabulary_choice",
+						"phrase_naturalness",
+						"pronunciation_segment",
+						"pronunciation_stress",
+						"pronunciation_rhythm",
+						"listening",
+						"interaction",
+						"other"
+					]
+				},
+				"learnerSaid": { "$ref": "#/$defs/text500" },
+				"suggested": { "$ref": "#/$defs/text500" },
+				"explanation": { "$ref": "#/$defs/text500" },
+				"severity": { "enum": ["low", "medium", "high"] }
+			}
+		}
+	},
+	"allOf": [
+		{
+			"if": { "properties": { "sessionType": { "const": "core" } }, "required": ["sessionType"] },
+			"then": {
+				"properties": {
+					"boost": { "type": "null" },
+					"previewGrammar": { "type": "array", "maxItems": 0 }
+				}
+			}
+		},
+		{
+			"if": { "properties": { "sessionType": { "const": "boost" } }, "required": ["sessionType"] },
+			"then": { "required": ["boost"], "properties": { "boost": { "type": "object" } } }
+		},
+		{
+			"if": {
+				"properties": {
+					"sessionType": { "const": "boost" },
+					"boost": {
+						"type": "object",
+						"properties": { "mode": { "const": "next_lesson_preview" } },
+						"required": ["mode"]
+					}
+				},
+				"required": ["sessionType", "boost"]
+			},
+			"then": {
+				"properties": { "previewGrammar": { "type": "array", "minItems": 1, "maxItems": 1 } }
+			},
+			"else": { "properties": { "previewGrammar": { "type": "array", "maxItems": 0 } } }
+		},
+		{
+			"if": {
+				"properties": {
+					"boost": {
+						"type": "object",
+						"properties": { "duration": { "const": 5 } },
+						"required": ["duration"]
+					}
+				},
+				"required": ["boost"]
+			},
+			"then": { "properties": { "durationMinutes": { "const": 5 } } }
+		},
+		{
+			"if": {
+				"properties": {
+					"boost": {
+						"type": "object",
+						"properties": { "duration": { "const": 15 } },
+						"required": ["duration"]
+					}
+				},
+				"required": ["boost"]
+			},
+			"then": { "properties": { "durationMinutes": { "const": 15 } } }
+		},
+		{
+			"if": {
+				"properties": {
+					"boost": {
+						"type": "object",
+						"properties": { "duration": { "const": 30 } },
+						"required": ["duration"]
+					}
+				},
+				"required": ["boost"]
+			},
+			"then": { "properties": { "durationMinutes": { "const": 30 } } }
+		},
+		{
+			"if": {
+				"properties": {
+					"boost": {
+						"type": "object",
+						"properties": { "duration": { "const": 60 } },
+						"required": ["duration"]
+					}
+				},
+				"required": ["boost"]
+			},
+			"then": { "properties": { "durationMinutes": { "const": 60 } } }
+		}
+	]
+}

@@ -21,7 +21,7 @@ export const en: Record<TranslationKey, string> = {
 	'demo.resetting': 'Resetting…',
 	'demo.readingExample': 'Open a Reading/Writing example',
 	'demo.github': 'View on GitHub',
-	'demo.curriculumNotice': 'Some curriculum support content is currently Japanese-first.',
+	'demo.curriculumNotice': 'All 365 days include complete English learner support.',
 	'update.available': 'A new version is available.',
 	'update.apply': 'Review and update',
 	'update.unsavedConfirm':

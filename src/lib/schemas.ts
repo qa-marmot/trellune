@@ -102,6 +102,78 @@ export const ReviewCardCandidateSchema = z
 	})
 	.strict();
 
+const SessionCommonShape = {
+	sessionId: uuidV4,
+	sessionType: z.enum(['core', 'boost']),
+	curriculumDay: z.number().int().min(1).max(SUPPORTED_CURRICULUM_DAY_MAX),
+	occurredAt: instant,
+	durationMinutes: z.number().int().min(1).max(120),
+	boost: z
+		.object({
+			duration: z.union([z.literal(5), z.literal(15), z.literal(30), z.literal(60)]),
+			mode: BoostModeSchema,
+		})
+		.strict()
+		.nullable(),
+	reviewCards: z.array(ReviewCardCandidateSchema).max(20),
+} as const;
+
+function addSessionContractIssues(
+	value: {
+		sessionType: 'core' | 'boost';
+		boost: { duration: 5 | 15 | 30 | 60; mode: z.infer<typeof BoostModeSchema> } | null;
+		durationMinutes: number;
+		previewGrammar: readonly unknown[];
+		mistakes: readonly unknown[];
+		reviewCards: readonly { sourceMistakeIndex: number | null }[];
+	},
+	context: z.RefinementCtx,
+): void {
+	if (value.sessionType === 'core') {
+		if (value.boost !== null)
+			context.addIssue({ code: 'custom', path: ['boost'], message: 'Core boost must be null.' });
+		if (value.previewGrammar.length !== 0)
+			context.addIssue({
+				code: 'custom',
+				path: ['previewGrammar'],
+				message: 'Core cannot preview future grammar.',
+			});
+	} else {
+		if (value.boost === null)
+			context.addIssue({
+				code: 'custom',
+				path: ['boost'],
+				message: 'Boost settings are required.',
+			});
+		if (value.boost && value.durationMinutes !== value.boost.duration)
+			context.addIssue({
+				code: 'custom',
+				path: ['durationMinutes'],
+				message: 'Boost duration must match boost.duration.',
+			});
+		if (value.boost?.mode === 'next_lesson_preview' && value.previewGrammar.length !== 1)
+			context.addIssue({
+				code: 'custom',
+				path: ['previewGrammar'],
+				message: 'Next Lesson Preview requires exactly one grammar preview.',
+			});
+		if (value.boost?.mode !== 'next_lesson_preview' && value.previewGrammar.length !== 0)
+			context.addIssue({
+				code: 'custom',
+				path: ['previewGrammar'],
+				message: 'Only Next Lesson Preview can include preview grammar.',
+			});
+	}
+	for (const [index, card] of value.reviewCards.entries()) {
+		if (card.sourceMistakeIndex !== null && card.sourceMistakeIndex >= value.mistakes.length)
+			context.addIssue({
+				code: 'custom',
+				path: ['reviewCards', index, 'sourceMistakeIndex'],
+				message: 'Review card references a missing mistake.',
+			});
+	}
+}
+
 /**
  * The provider-neutral SESSION_JSON v1.0 contract. It is validated before
  * imported data can reach application state or persistence.
@@ -109,84 +181,115 @@ export const ReviewCardCandidateSchema = z
 export const SessionJsonSchema = z
 	.object({
 		schemaVersion: z.literal('1.0'),
-		sessionId: uuidV4,
-		sessionType: z.enum(['core', 'boost']),
-		curriculumDay: z.number().int().min(1).max(SUPPORTED_CURRICULUM_DAY_MAX),
-		occurredAt: instant,
-		durationMinutes: z.number().int().min(1).max(120),
-		boost: z
-			.object({
-				duration: z.union([z.literal(5), z.literal(15), z.literal(30), z.literal(60)]),
-				mode: BoostModeSchema,
-			})
-			.strict()
-			.nullable(),
+		...SessionCommonShape,
 		summaryJa: trimmedText(1_000),
 		evaluation: EvaluationSchema,
 		mistakes: z.array(MistakeCandidateSchema).max(20),
 		newVocabulary: z.array(LearningItemSchema).max(8),
 		newPhrases: z.array(LearningItemSchema).max(3),
 		previewGrammar: z.array(GrammarPreviewSchema).max(1),
-		reviewCards: z.array(ReviewCardCandidateSchema).max(20),
 	})
 	.strict()
-	.superRefine((value, context) => {
-		if (value.sessionType === 'core') {
-			if (value.boost !== null)
-				context.addIssue({ code: 'custom', path: ['boost'], message: 'Core boost must be null.' });
-			if (value.previewGrammar.length !== 0) {
-				context.addIssue({
-					code: 'custom',
-					path: ['previewGrammar'],
-					message: 'Core cannot preview future grammar.',
-				});
-			}
-		} else {
-			if (value.boost === null)
-				context.addIssue({
-					code: 'custom',
-					path: ['boost'],
-					message: 'Boost settings are required.',
-				});
-			if (value.boost && value.durationMinutes !== value.boost.duration) {
-				context.addIssue({
-					code: 'custom',
-					path: ['durationMinutes'],
-					message: 'Boost duration must match boost.duration.',
-				});
-			}
-			if (value.boost?.mode === 'next_lesson_preview' && value.previewGrammar.length !== 1) {
-				context.addIssue({
-					code: 'custom',
-					path: ['previewGrammar'],
-					message: 'Next Lesson Preview requires exactly one grammar preview.',
-				});
-			}
-			if (value.boost?.mode !== 'next_lesson_preview' && value.previewGrammar.length !== 0) {
-				context.addIssue({
-					code: 'custom',
-					path: ['previewGrammar'],
-					message: 'Only Next Lesson Preview can include preview grammar.',
-				});
-			}
-		}
-		for (const [index, card] of value.reviewCards.entries()) {
-			if (card.sourceMistakeIndex !== null && card.sourceMistakeIndex >= value.mistakes.length) {
-				context.addIssue({
-					code: 'custom',
-					path: ['reviewCards', index, 'sourceMistakeIndex'],
-					message: 'Review card references a missing mistake.',
-				});
-			}
-		}
+	.superRefine(addSessionContractIssues);
+
+const EvaluationV11Schema = z
+	.object({
+		taskCompletion: z.number().int().min(1).max(5),
+		grammar: z.number().int().min(1).max(5),
+		vocabulary: z.number().int().min(1).max(5),
+		fluency: z.number().int().min(1).max(5),
+		interaction: z.number().int().min(1).max(5),
+		comment: trimmedText(500),
+	})
+	.strict();
+
+const LearningItemV11Schema = z
+	.object({ text: trimmedText(120), meaning: shortText, example: trimmedText(300) })
+	.strict();
+
+const GrammarPreviewV11Schema = z
+	.object({
+		topicId: z.string().regex(/^[a-z0-9-]{1,80}$/),
+		title: trimmedText(120),
+		note: trimmedText(500),
+		status: z.literal('previewed'),
+	})
+	.strict();
+
+const MistakeCandidateV11Schema = z
+	.object({
+		category: MistakeCategorySchema,
+		learnerSaid: trimmedText(500),
+		suggested: trimmedText(500),
+		explanation: trimmedText(500),
+		severity: z.enum(['low', 'medium', 'high']),
+	})
+	.strict();
+
+/**
+ * SESSION_JSON 1.1 is an additive import surface for language-neutral support.
+ * The original external payload is preserved; callers may normalize either
+ * version to the neutral in-memory shape with normalizeExternalSession().
+ */
+export const SessionJsonV11Schema = z
+	.object({
+		schemaVersion: z.literal('1.1'),
+		supportLanguage: z.enum(['ja', 'en']),
+		...SessionCommonShape,
+		summary: trimmedText(1_000),
+		evaluation: EvaluationV11Schema,
+		mistakes: z.array(MistakeCandidateV11Schema).max(20),
+		newVocabulary: z.array(LearningItemV11Schema).max(8),
+		newPhrases: z.array(LearningItemV11Schema).max(3),
+		previewGrammar: z.array(GrammarPreviewV11Schema).max(1),
+	})
+	.strict()
+	.superRefine(addSessionContractIssues);
+
+export const ExternalSessionJsonSchema = z.discriminatedUnion('schemaVersion', [
+	SessionJsonSchema,
+	SessionJsonV11Schema,
+]);
+
+export function normalizeExternalSession(
+	value: z.infer<typeof ExternalSessionJsonSchema>,
+): z.infer<typeof SessionJsonV11Schema> {
+	if (value.schemaVersion === '1.1') return value;
+	const { commentJa, ...evaluation } = value.evaluation;
+	return SessionJsonV11Schema.parse({
+		schemaVersion: '1.1',
+		supportLanguage: 'ja',
+		sessionId: value.sessionId,
+		sessionType: value.sessionType,
+		curriculumDay: value.curriculumDay,
+		occurredAt: value.occurredAt,
+		durationMinutes: value.durationMinutes,
+		boost: value.boost,
+		summary: value.summaryJa,
+		evaluation: { ...evaluation, comment: commentJa },
+		mistakes: value.mistakes.map(({ explanationJa, ...item }) => ({
+			...item,
+			explanation: explanationJa,
+		})),
+		newVocabulary: value.newVocabulary.map(({ meaningJa, ...item }) => ({
+			...item,
+			meaning: meaningJa,
+		})),
+		newPhrases: value.newPhrases.map(({ meaningJa, ...item }) => ({
+			...item,
+			meaning: meaningJa,
+		})),
+		previewGrammar: value.previewGrammar.map(({ noteJa, ...item }) => ({ ...item, note: noteJa })),
+		reviewCards: value.reviewCards,
 	});
+}
 
 /** @deprecated Use SessionJsonSchema. Kept so existing imports stay compatible. */
 export const ChatGptSessionSchema = SessionJsonSchema;
 
 export const SessionImportRequestSchema = z
 	.object({
-		payload: SessionJsonSchema,
+		payload: ExternalSessionJsonSchema,
 		studyDate: localDate,
 		idempotencyKey: identifier,
 		sourceTextHash: z.string().regex(/^[a-f0-9]{64}$/),
@@ -306,7 +409,7 @@ export const ChangeQuerySchema = z
 	})
 	.strict();
 
-export type SessionImport = z.infer<typeof SessionJsonSchema>;
+export type SessionImport = z.infer<typeof ExternalSessionJsonSchema>;
 export type SessionImportRequest = z.infer<typeof SessionImportRequestSchema>;
 export type DailyProgressPatch = z.infer<typeof DailyProgressPatchSchema>;
 export type BoostMode = z.infer<typeof BoostModeSchema>;

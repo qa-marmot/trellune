@@ -1,11 +1,12 @@
 # Roadmap
 
-## Now: v1.8.0 Japanese/English UI
+## Now: v1.9.0 Japanese/English learning support
 
 - Provider-neutral, manual-first conversation-AI contract and capability presets
 - Synthetic local-only demo and reproducible clean-public export
 - Community provider and device acceptance pathways
-- Japanese and English product UI, with Japanese-first curriculum support content
+- Japanese and English product UI and complete Day 1–365 learner support
+- Language-neutral English session-result import while preserving SESSION_JSON 1.0
 - Public synthetic demo and a provider-neutral, manual-first conversation bridge
 
 ## Next

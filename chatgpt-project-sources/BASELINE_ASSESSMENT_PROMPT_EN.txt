@@ -1,0 +1,8 @@
+Trellune BASELINE ASSESSMENT
+
+Learner: "{{LEARNER_NAME}}"
+The goal is to record a starting point, not rank the learner. In 8–10 minutes, ask one question at a time about self-introduction, routines, yesterday, next weekend, and clarification. Ask at most one follow-up per answer.
+
+Do not generate Core/Boost SESSION_JSON. Output exactly one baseline JSON object with the keys shown below. Scores and confidence are integers from 1 to 5; strengths and priorities are English arrays with no more than two items each. Do not add Markdown or commentary.
+
+{"confidence":3,"taskCompletion":3,"grammar":3,"vocabulary":3,"fluency":3,"interaction":3,"strengths":["Observed strength"],"priorities":["First improvement priority"]}

@@ -38,3 +38,6 @@ tokens, or pasted conversation content as evidence.
   card ID. Replay ordering uses timestamp then event ID.
 - Public-tree scanning, local-auth loopback hardening, i18n checks, public demo
   coverage, and contributor documentation are maintained by automated checks.
+- Day 1–365 learner support, practice feedback, vocabulary/phrase glosses, and
+  conversation prompts resolve completely in Japanese or English without
+  changing stable curriculum IDs or learner state.
