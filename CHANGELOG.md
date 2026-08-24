@@ -3,6 +3,20 @@
 All notable changes are recorded here. Trellune follows semantic versioning
 when a release is made.
 
+## v1.9.0 — Full English learning support
+
+- Added complete English learner support for all 365 curriculum days while
+  preserving the canonical Japanese curriculum and every stable content ID
+- Localized grammar guidance, vocabulary and phrase glosses, practice feedback,
+  Voice coaching, provider workflows, and generated baseline/weekly prompts
+- Added strict, language-neutral `SESSION_JSON` 1.1 input with lossless
+  normalization to the existing storage model; version 1.0 remains supported
+- Added all-365 completeness, Japanese-leak, prompt-parity, schema-parity,
+  responsive Chromium, and mobile WebKit regression coverage
+- Kept ACTIVE/AVAILABLE/SUPPORTED at 365/365/540; additive migration 0013
+  backfills neutral session-support columns while preserving legacy values. No Dexie,
+  sync, backup, Core, Boost, or SRS contract change
+
 ## v1.8.1 — Reliable installed-PWA updates
 
 - Added a consent-safe in-app update check that uses only the standard

@@ -60,8 +60,14 @@ svg {
 h1,
 h2,
 h3,
-p {
+p,
+li,
+dd,
+dt,
+small {
 	margin-block: 0;
+	min-width: 0;
+	overflow-wrap: anywhere;
 }
 h1,
 h2,
@@ -81,6 +87,7 @@ h2 {
 }
 ul,
 ol {
+	max-width: 100%;
 	margin-block: 0;
 	padding-inline-start: var(--space-lg);
 }
@@ -185,6 +192,7 @@ mark {
 }
 
 .field {
+	min-width: 0;
 	display: grid;
 	gap: var(--space-xs);
 }
@@ -192,6 +200,8 @@ mark {
 .choice-group legend,
 .search-field > span {
 	font-weight: 700;
+	overflow-wrap: anywhere;
+	min-width: 0;
 }
 .field small {
 	color: var(--color-muted);
@@ -202,6 +212,8 @@ mark {
 .search-field input,
 select {
 	width: 100%;
+	min-width: 0;
+	max-width: 100%;
 	min-height: 48px;
 	padding: var(--space-sm) var(--space-md);
 	border: var(--rule-hair) solid var(--color-rule);
@@ -328,7 +340,7 @@ input[type='range'] {
 	margin: -1px;
 	overflow: hidden;
 	clip: rect(0, 0, 0, 0);
-	white-space: nowrap;
+	white-space: normal;
 	border: 0;
 }
 .desktop-nav {
@@ -842,11 +854,19 @@ input[type='range'] {
 }
 
 .lesson-layout {
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
 	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	gap: var(--space-xl);
 }
 .lesson-note {
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
 	display: grid;
+	overflow-wrap: anywhere;
 	gap: var(--space-lg);
 	padding-block: var(--space-lg);
 	border-block: var(--rule-hair) solid var(--color-rule);
@@ -858,11 +878,20 @@ input[type='range'] {
 	line-height: 1.15;
 }
 .practice-card {
+	width: 100%;
+	max-width: 100%;
+	min-width: 0;
 	display: grid;
+	overflow-wrap: anywhere;
 	gap: var(--space-md);
 	padding: var(--space-lg);
 	border-radius: var(--radius-card);
 	background: var(--color-cyan-soft);
+}
+.lesson-note > *,
+.practice-card > * {
+	min-width: 0;
+	max-width: 100%;
 }
 .practice-library {
 	display: grid;
@@ -1717,15 +1746,55 @@ input[type='range'] {
 }
 
 @media (max-width: 28rem) {
+	.main-content {
+		padding-inline: max(8px, env(safe-area-inset-left));
+	}
+	.skip-link {
+		left: 8px;
+		max-width: calc(100vw - 16px);
+		padding: 8px;
+		white-space: normal;
+		overflow-wrap: anywhere;
+	}
+	.button {
+		white-space: normal;
+		overflow-wrap: anywhere;
+	}
 	.wordmark > span:last-child {
 		display: none;
 	}
 	.topbar {
+		flex-wrap: wrap;
 		gap: var(--space-2xs);
 		padding-inline: var(--space-xs);
 	}
+	.topbar .locale-select {
+		flex: 1 0 100%;
+		min-width: 0;
+	}
 	.locale-select select {
-		min-inline-size: 5.35rem;
+		inline-size: 100%;
+		min-inline-size: 0;
+	}
+	.mobile-nav {
+		inline-size: 100%;
+		max-inline-size: 100vw;
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+	}
+	.mobile-nav__link {
+		min-width: 0;
+		text-align: center;
+		white-space: normal;
+		overflow-wrap: anywhere;
+	}
+	.mobile-nav__link svg {
+		width: 24px;
+		height: 24px;
+	}
+	.mobile-nav__link span {
+		min-width: 0;
+		max-width: 100%;
+		overflow-wrap: anywhere;
 	}
 }
 

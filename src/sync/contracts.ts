@@ -3,7 +3,7 @@ import { SUPPORTED_CURRICULUM_DAY_MAX } from '../curriculum/constants';
 import { StageAssessmentSchema } from '../domain/assessment';
 import {
 	BaselineAssessmentSchema,
-	ChatGptSessionSchema,
+	ExternalSessionJsonSchema,
 	IanaTimeZoneSchema,
 	WeeklyAssessmentSchema,
 } from '../lib/schemas';
@@ -89,7 +89,7 @@ export const SessionPayloadSchema = z
 		summary: z.string().min(1).max(1_000),
 		score: z.number().min(0).max(100),
 		mistakes: z.array(z.string().max(1_000)).max(20),
-		payload: ChatGptSessionSchema.optional(),
+		payload: ExternalSessionJsonSchema.optional(),
 		studyDate: StudyDateSchema.optional(),
 		canonicalContentHash: z
 			.string()
@@ -115,11 +115,25 @@ export const LearningItemPayloadSchema = z
 		kind: z.enum(['vocabulary', 'phrase']),
 		canonicalText: z.string().min(1).max(500),
 		displayText: z.string().min(1).max(500),
-		meaningJa: z.string().max(1_000),
+		meaning: z.string().max(1_000).optional(),
+		supportLanguage: z.enum(['ja', 'en']).optional(),
+		meaningJa: z.string().max(1_000).optional(),
 		status: z.enum(['new', 'learning', 'learned', 'previewed']),
 		updatedAt: TimestampSchema,
 	})
-	.strict();
+	.strict()
+	.superRefine((value, context) => {
+		if (!value.meaning && !value.meaningJa) {
+			context.addIssue({ code: 'custom', path: ['meaning'], message: 'A meaning is required.' });
+		}
+		if (value.meaning && !value.supportLanguage) {
+			context.addIssue({
+				code: 'custom',
+				path: ['supportLanguage'],
+				message: 'supportLanguage is required for a neutral meaning.',
+			});
+		}
+	});
 
 export const AcquisitionEventPayloadSchema = z
 	.object({

@@ -8,7 +8,7 @@ import { reconstructReviewHistory } from '../domain/srs';
 import { parseStrictJson } from '../lib/strictJson';
 import {
 	BaselineAssessmentSchema,
-	ChatGptSessionSchema,
+	ExternalSessionJsonSchema,
 	IanaTimeZoneSchema,
 	WeeklyAssessmentSchema,
 } from '../lib/schemas';
@@ -101,7 +101,7 @@ const SessionSchema = z
 		summary: z.string().min(1).max(1_000),
 		score: z.number().min(0).max(100),
 		mistakes: z.array(z.string().max(1_000)).max(20),
-		payload: ChatGptSessionSchema.optional(),
+		payload: ExternalSessionJsonSchema.optional(),
 		studyDate: z.iso.date().optional(),
 		canonicalContentHash: z
 			.string()
@@ -127,11 +127,14 @@ const LearningItemSchema = z
 		kind: z.enum(['vocabulary', 'phrase']),
 		canonicalText: z.string().min(1).max(500),
 		displayText: z.string().min(1).max(500),
-		meaningJa: z.string().max(1_000),
+		meaning: z.string().max(1_000).optional(),
+		supportLanguage: z.enum(['ja', 'en']).optional(),
+		meaningJa: z.string().max(1_000).optional(),
 		status: z.enum(['new', 'learning', 'learned', 'previewed']),
 		updatedAt: TimestampSchema,
 	})
-	.strict();
+	.strict()
+	.refine((value) => Boolean(value.meaning || value.meaningJa), 'A meaning is required.');
 
 const AcquisitionEventSchema = z
 	.object({
@@ -427,7 +430,7 @@ function assertBackupWithinActiveCurriculum(data: BackupData, activeTotalDays: n
 	for (const session of data.sessions) {
 		if (!session.payload) continue;
 		days.push({
-			day: ChatGptSessionSchema.parse(session.payload).curriculumDay,
+			day: ExternalSessionJsonSchema.parse(session.payload).curriculumDay,
 			label: `セッション「${session.sessionId}」`,
 		});
 	}
@@ -634,7 +637,7 @@ async function validateSemantics(data: BackupData): Promise<void> {
 	}
 	for (const session of data.sessions) {
 		if (session.payload) {
-			const payload = ChatGptSessionSchema.parse(session.payload);
+			const payload = ExternalSessionJsonSchema.parse(session.payload);
 			if (payload.sessionId !== session.sessionId || payload.sessionType !== session.kind) {
 				throw new BackupValidationError(
 					`セッション「${session.sessionId}」の構造化payloadが一致しません。`,
@@ -846,7 +849,7 @@ async function legacyEnvelope(value: unknown): Promise<BackupEnvelope | null> {
 		learningEvents: [],
 		sessions: legacy.sessions.map((session) => {
 			const { payload: rawPayload, ...safeSession } = session;
-			const payload = ChatGptSessionSchema.safeParse(rawPayload);
+			const payload = ExternalSessionJsonSchema.safeParse(rawPayload);
 			return {
 				...safeSession,
 				...(payload.success ? { payload: payload.data } : {}),

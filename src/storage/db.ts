@@ -33,7 +33,8 @@ import {
 } from '../curriculum/availability';
 import {
 	BaselineAssessmentSchema,
-	ChatGptSessionSchema,
+	ExternalSessionJsonSchema,
+	normalizeExternalSession,
 	IanaTimeZoneSchema,
 	WeeklyAssessmentSchema,
 	type BaselineAssessment,
@@ -143,7 +144,10 @@ export interface LearningItemRecord {
 	kind: 'vocabulary' | 'phrase';
 	canonicalText: string;
 	displayText: string;
-	meaningJa: string;
+	meaning: string;
+	supportLanguage: 'ja' | 'en';
+	/** Legacy Dexie v5 records are normalized at the read boundary. */
+	meaningJa?: string;
 	status: 'new' | 'learning' | 'learned' | 'previewed';
 	updatedAt: string;
 }
@@ -1002,7 +1006,7 @@ function validateNormalizedInvariants(input: {
 	for (const session of input.sessions) {
 		if (session.payload) {
 			assertActiveDay(
-				ChatGptSessionSchema.parse(session.payload).curriculumDay,
+				ExternalSessionJsonSchema.parse(session.payload).curriculumDay,
 				`Session ${session.sessionId}`,
 			);
 		}
@@ -1138,7 +1142,14 @@ export async function loadAppData(): Promise<AppData> {
 		const safeMistakes = mistakes.map((item) => MistakePayloadSchema.parse(item));
 		const safeReviewCards = reviewCards.map((item) => ReviewCardPayloadSchema.parse(item));
 		const safeAssessments = assessments.map((item) => AssessmentPayloadSchema.parse(item));
-		const safeLearningItems = learningItems.map((item) => LearningItemPayloadSchema.parse(item));
+		const safeLearningItems = learningItems.map((item) => {
+			const parsed = LearningItemPayloadSchema.parse(item);
+			return {
+				...parsed,
+				meaning: parsed.meaning ?? parsed.meaningJa ?? '',
+				supportLanguage: parsed.supportLanguage ?? 'ja',
+			};
+		});
 		const safeAcquisitionEvents = acquisitionEvents.map((item) =>
 			AcquisitionEventPayloadSchema.parse(item),
 		);
@@ -1231,7 +1242,8 @@ export async function loadAppData(): Promise<AppData> {
 				id: item.id,
 				kind: item.kind,
 				displayText: item.displayText,
-				meaningJa: item.meaningJa,
+				meaning: item.meaning,
+				supportLanguage: item.supportLanguage,
 				status: item.status,
 			})),
 			remainingAcquisition: {
@@ -1521,8 +1533,9 @@ export async function persistImportedSession(
 	session: ImportedSession,
 ): Promise<'created' | 'duplicate'> {
 	const safeSession = sanitizeImportedSession(session);
-	const payload = ChatGptSessionSchema.parse(safeSession.payload);
-	const canonicalContentHash = await sessionContentHash(payload);
+	const externalPayload = ExternalSessionJsonSchema.parse(safeSession.payload);
+	const payload = normalizeExternalSession(externalPayload);
+	const canonicalContentHash = await sessionContentHash(externalPayload);
 	const now = nowIso();
 	try {
 		let outcome: 'created' | 'duplicate' = 'created';
@@ -1604,6 +1617,7 @@ export async function persistImportedSession(
 				}
 				const storedSession: SessionRecord = {
 					...safeSession,
+					payload: externalPayload,
 					studyDate,
 					canonicalContentHash,
 				};
@@ -1638,7 +1652,8 @@ export async function persistImportedSession(
 							kind,
 							canonicalText,
 							displayText: item.text,
-							meaningJa: item.meaningJa,
+							meaning: item.meaning,
+							supportLanguage: payload.supportLanguage,
 							status: payload.sessionType === 'boost' ? 'previewed' : 'new',
 							updatedAt: now,
 						});
@@ -1653,7 +1668,7 @@ export async function persistImportedSession(
 						cards.push({
 							id: `${payload.sessionId}:card:${kind}:${index}`,
 							front: item.text,
-							back: `${item.meaningJa}\n${item.example}`,
+							back: `${item.meaning}\n${item.example}`,
 							dueAt: now,
 							state: payload.sessionType === 'boost' ? 'previewed' : 'new',
 							sourceType: kind,

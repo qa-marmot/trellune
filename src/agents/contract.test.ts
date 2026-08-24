@@ -67,4 +67,27 @@ describe('provider-neutral learning conversation contract', () => {
 		expect(prompt).toContain('Trellune側の検証を通るまで取込成功と断言しない');
 		expect(prompt).not.toContain('ChatGPT');
 	});
+
+	it('renders provider workflow and trust-boundary guidance in English when requested', () => {
+		const prompt = renderLearningConversationPrompt(
+			{
+				...request,
+				supportLanguage: 'en',
+				theme: 'Weekend plans',
+				objective: 'Explain a plan and a reason.',
+				grammar: { title: 'Future forms', focus: 'Choose a form that matches the plan.' },
+				voiceTask: 'Discuss a weekend plan.',
+				coaching: 'Ask one question at a time.',
+				outputContract: {
+					name: 'SESSION_JSON',
+					schemaVersion: '1.1',
+					instruction: 'Wait for the explicit output request.',
+				},
+			},
+			getConversationProviderPreset('generic'),
+		);
+		expect(prompt).toContain('supportLanguage: en');
+		expect(prompt).toContain('Trellune never sends data to an external AI automatically.');
+		expect(prompt).not.toMatch(/[ぁ-んァ-ン一-龯]/u);
+	});
 });

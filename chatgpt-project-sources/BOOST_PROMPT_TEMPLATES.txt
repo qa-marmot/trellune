@@ -9,6 +9,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -54,6 +55,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -99,6 +101,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -144,6 +147,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -189,6 +193,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -234,6 +239,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -285,6 +291,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -330,6 +337,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -375,6 +383,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -420,6 +429,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -465,6 +475,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -510,6 +521,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -555,6 +567,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -606,6 +619,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -651,6 +665,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -696,6 +711,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -741,6 +757,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -786,6 +803,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -831,6 +849,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -876,6 +895,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -927,6 +947,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -972,6 +993,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -1017,6 +1039,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -1062,6 +1085,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -1107,6 +1131,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -1152,6 +1177,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -1197,6 +1223,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}
@@ -1248,6 +1275,7 @@ Trelluneは外部AIへ自動送信しません。
 
 LEARNING_CONVERSATION_REQUEST
 contractVersion: 1.0
+supportLanguage: ja
 sessionType: boost
 curriculumDay: {{CURRICULUM_DAY}}
 theme: {{THEME}}

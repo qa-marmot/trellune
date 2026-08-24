@@ -4,6 +4,11 @@ import boostArtifact from '../../chatgpt-project-sources/BOOST_PROMPT_TEMPLATES.
 import coreArtifact from '../../chatgpt-project-sources/DAILY_CORE_PROMPT_TEMPLATE.txt?raw';
 import studyArtifact from '../../chatgpt-project-sources/STUDY_MODE_INITIAL_PROMPT.txt?raw';
 import weeklyArtifact from '../../chatgpt-project-sources/WEEKLY_ASSESSMENT_PROMPT.txt?raw';
+import baselineArtifactEn from '../../chatgpt-project-sources/BASELINE_ASSESSMENT_PROMPT_EN.txt?raw';
+import boostArtifactEn from '../../chatgpt-project-sources/BOOST_PROMPT_TEMPLATES_EN.txt?raw';
+import coreArtifactEn from '../../chatgpt-project-sources/DAILY_CORE_PROMPT_TEMPLATE_EN.txt?raw';
+import studyArtifactEn from '../../chatgpt-project-sources/STUDY_MODE_INITIAL_PROMPT_EN.txt?raw';
+import weeklyArtifactEn from '../../chatgpt-project-sources/WEEKLY_ASSESSMENT_PROMPT_EN.txt?raw';
 import {
 	buildBaselinePrompt,
 	buildBoostPrompt,
@@ -68,5 +73,39 @@ describe('generated prompt artifacts', () => {
 				['{{REPEATED_MISTAKES}}'] as never,
 			),
 		);
+	});
+
+	it('matches English checked-in prompts and contains no Japanese fallback', () => {
+		const englishContext = { ...context, supportLanguage: 'en' as const };
+		const expected = [
+			buildCorePrompt(englishContext),
+			([5, 15, 30, 60] as const)
+				.flatMap((duration) =>
+					boostModes.map((mode) => buildBoostPrompt(englishContext, duration, mode)),
+				)
+				.join('\n\n----- NEXT BOOST VARIANT -----\n\n'),
+			buildStudyContext(englishContext),
+			buildBaselinePrompt('{{LEARNER_NAME}}', 'en'),
+			buildWeeklyPrompt(
+				'{{START_DAY}}' as never,
+				'{{END_DAY}}' as never,
+				['{{WEEK_OBJECTIVES}}'],
+				['{{GRAMMAR}}'],
+				['{{PHRASES}}'],
+				['{{REPEATED_MISTAKES}}'] as never,
+				'en',
+			),
+		];
+		const artifacts = [
+			coreArtifactEn,
+			boostArtifactEn,
+			studyArtifactEn,
+			baselineArtifactEn,
+			weeklyArtifactEn,
+		];
+		for (const [index, value] of artifacts.entries()) {
+			expect(artifact(value)).toBe(expected[index]);
+			expect(value).not.toMatch(/[ぁ-んァ-ン一-龯]/u);
+		}
 	});
 });

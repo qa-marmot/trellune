@@ -13,6 +13,7 @@ import type {
 	SessionImportRequest,
 	StageAssessmentImportRequest,
 } from '../lib/schemas';
+import { normalizeExternalSession } from '../lib/schemas';
 import {
 	DailyProgressPayloadSchema,
 	GrammarProgressPayloadSchema,
@@ -356,8 +357,9 @@ export class EnglishOsRepository {
 		}
 		if (!preview.limits.accepted) throw new AcquisitionLimitError(preview);
 
-		const payload = request.payload;
-		const canonicalPayloadHash = await canonicalHash(payload, new Set(['sessionId']));
+		const sourcePayload = request.payload;
+		const payload = normalizeExternalSession(sourcePayload);
+		const canonicalPayloadHash = await canonicalHash(sourcePayload, new Set(['sessionId']));
 		const importId = crypto.randomUUID();
 		const state = importedItemState(payload);
 		const statements: D1PreparedStatement[] = [];
@@ -369,10 +371,11 @@ export class EnglishOsRepository {
 							 id, learner_id, external_session_id, idempotency_key, source_text_hash,
 							 canonical_payload_hash, kind,
              study_date, occurred_at, curriculum_day, boost_duration_minutes, boost_mode,
-             summary_ja, duration_minutes, task_completion_score, grammar_score,
-             vocabulary_score, fluency_score, interaction_score, evaluation_comment_ja,
-             contract_version, imported_at
-						 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+							 summary_ja, support_language, summary_text, duration_minutes,
+							 task_completion_score, grammar_score, vocabulary_score, fluency_score,
+							 interaction_score, evaluation_comment_ja, evaluation_comment_text,
+							 contract_version, imported_at
+						 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 				)
 				.bind(
 					importId,
@@ -387,14 +390,17 @@ export class EnglishOsRepository {
 					payload.sessionType === 'core' ? payload.curriculumDay : null,
 					payload.sessionType === 'boost' ? payload.boost?.duration : null,
 					payload.sessionType === 'boost' ? payload.boost?.mode : null,
-					payload.summaryJa,
+					payload.supportLanguage === 'ja' ? payload.summary : null,
+					payload.supportLanguage,
+					payload.summary,
 					payload.durationMinutes,
 					payload.evaluation.taskCompletion,
 					payload.evaluation.grammar,
 					payload.evaluation.vocabulary,
 					payload.evaluation.fluency,
 					payload.evaluation.interaction,
-					payload.evaluation.commentJa,
+					payload.supportLanguage === 'ja' ? payload.evaluation.comment : '',
+					payload.evaluation.comment,
 					1,
 					now,
 				),
@@ -408,8 +414,8 @@ export class EnglishOsRepository {
 					.prepare(
 						`INSERT INTO vocabulary (
                id, learner_id, session_id, client_id, study_date, term, normalized_term,
-               meaning_ja, example, state, created_at, updated_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+               meaning_ja, support_language, meaning_text, example, state, created_at, updated_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 					)
 					.bind(
 						id,
@@ -419,7 +425,9 @@ export class EnglishOsRepository {
 						request.studyDate,
 						word.text,
 						normalizeEnglishIdentity(word.text),
-						word.meaningJa,
+						payload.supportLanguage === 'ja' ? word.meaning : '',
+						payload.supportLanguage,
+						word.meaning,
 						word.example,
 						state,
 						now,
@@ -433,7 +441,7 @@ export class EnglishOsRepository {
 					'vocabulary',
 					id,
 					word.text,
-					`${word.meaningJa}\n${word.example}`,
+					`${word.meaning}\n${word.example}`,
 					request.studyDate,
 					now,
 					'vocabulary',
@@ -452,6 +460,7 @@ export class EnglishOsRepository {
 					id,
 					cardId,
 					word,
+					payload.supportLanguage,
 					state,
 					now,
 				),
@@ -466,8 +475,8 @@ export class EnglishOsRepository {
 					.prepare(
 						`INSERT INTO phrases (
                id, learner_id, session_id, client_id, study_date, phrase, normalized_phrase,
-               meaning_ja, example, state, created_at, updated_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+               meaning_ja, support_language, meaning_text, example, state, created_at, updated_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 					)
 					.bind(
 						id,
@@ -477,7 +486,9 @@ export class EnglishOsRepository {
 						request.studyDate,
 						phrase.text,
 						normalizeEnglishIdentity(phrase.text),
-						phrase.meaningJa,
+						payload.supportLanguage === 'ja' ? phrase.meaning : '',
+						payload.supportLanguage,
+						phrase.meaning,
 						phrase.example,
 						state,
 						now,
@@ -491,7 +502,7 @@ export class EnglishOsRepository {
 					'phrase',
 					id,
 					phrase.text,
-					`${phrase.meaningJa}\n${phrase.example}`,
+					`${phrase.meaning}\n${phrase.example}`,
 					request.studyDate,
 					now,
 					'phrases',
@@ -510,6 +521,7 @@ export class EnglishOsRepository {
 					id,
 					cardId,
 					phrase,
+					payload.supportLanguage,
 					state,
 					now,
 				),
@@ -523,8 +535,9 @@ export class EnglishOsRepository {
 					this.database
 						.prepare(
 							`INSERT INTO grammar_previews (
-                 id, learner_id, session_id, client_id, study_date, topic_key, title, note_ja, state, created_at
-               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'previewed', ?)`,
+                 id, learner_id, session_id, client_id, study_date, topic_key, title,
+                 note_ja, support_language, note_text, state, created_at
+               ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'previewed', ?)`,
 						)
 						.bind(
 							grammarId,
@@ -534,7 +547,9 @@ export class EnglishOsRepository {
 							request.studyDate,
 							grammar.topicId,
 							grammar.title,
-							grammar.noteJa,
+							payload.supportLanguage === 'ja' ? grammar.note : null,
+							payload.supportLanguage,
+							grammar.note,
 							now,
 						),
 				);
@@ -627,12 +642,15 @@ export class EnglishOsRepository {
 						.prepare(
 							`UPDATE mistakes SET
 							   occurrence_count = occurrence_count + ?,
-							   explanation_ja = ?, severity = ?, updated_at = ?
+							   explanation_ja = ?, support_language = ?, explanation_text = ?,
+							   severity = ?, updated_at = ?
 							 WHERE learner_id = ? AND id = ? AND canonical_identity = ?`,
 						)
 						.bind(
 							aggregate.incomingOccurrences,
-							aggregate.mistake.explanationJa,
+							payload.supportLanguage === 'ja' ? aggregate.mistake.explanation : null,
+							payload.supportLanguage,
+							aggregate.mistake.explanation,
 							aggregate.mistake.severity,
 							now,
 							learnerId,
@@ -646,12 +664,15 @@ export class EnglishOsRepository {
 						.prepare(
 							`INSERT INTO mistakes (
 							 id, learner_id, session_id, client_id, category, original_text,
-							 correction_text, explanation_ja, severity, occurrence_count, created_at, updated_at,
+							 correction_text, explanation_ja, support_language, explanation_text,
+							 severity, occurrence_count, created_at, updated_at,
 							 canonical_identity
-						 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+						 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 						 ON CONFLICT(id) DO UPDATE SET
 						   occurrence_count = mistakes.occurrence_count + excluded.occurrence_count,
 						   explanation_ja = excluded.explanation_ja,
+						   support_language = excluded.support_language,
+						   explanation_text = excluded.explanation_text,
 						   severity = excluded.severity,
 						   updated_at = excluded.updated_at`,
 						)
@@ -663,7 +684,9 @@ export class EnglishOsRepository {
 							aggregate.mistake.category,
 							aggregate.mistake.learnerSaid,
 							aggregate.mistake.suggested,
-							aggregate.mistake.explanationJa,
+							payload.supportLanguage === 'ja' ? aggregate.mistake.explanation : null,
+							payload.supportLanguage,
+							aggregate.mistake.explanation,
 							aggregate.mistake.severity,
 							aggregate.incomingOccurrences,
 							now,
@@ -792,12 +815,12 @@ export class EnglishOsRepository {
 			kind: payload.sessionType,
 			completedAt: payload.occurredAt,
 			durationMinutes: payload.durationMinutes,
-			summary: payload.summaryJa,
+			summary: payload.summary,
 			score: Math.round(
 				(scoreValues.reduce((total, value) => total + value, 0) / scoreValues.length) * 20,
 			),
 			mistakes: payload.mistakes.map((item) => `${item.learnerSaid} → ${item.suggested}`),
-			payload,
+			payload: sourcePayload,
 		};
 		statements.push(
 			this.database
@@ -2689,7 +2712,7 @@ export class EnglishOsRepository {
 					   json_object(
 					     'sessionId', external_session_id, 'kind', kind, 'completedAt', occurred_at,
 					     'durationMinutes', duration_minutes,
-					     'summary', COALESCE(NULLIF(summary_ja, ''), 'Legacy session'),
+					     'summary', COALESCE(NULLIF(summary_text, ''), NULLIF(summary_ja, ''), 'Legacy session'),
 					     'score', ROUND((task_completion_score + grammar_score + vocabulary_score + fluency_score + interaction_score) * 4),
 					     'mistakes', json_array(), 'studyDate', study_date,
 					     'canonicalContentHash', canonical_payload_hash
@@ -2718,16 +2741,19 @@ export class EnglishOsRepository {
 					 )
 					 SELECT item.learner_id, 'learning-item', item.id, 'upsert',
 					   json_object('id', item.id, 'kind', item.kind, 'canonicalText', item.canonical_text,
-					     'displayText', item.display_text, 'meaningJa', item.meaning_ja,
+					     'displayText', item.display_text,
+					     'meaning', COALESCE(NULLIF(item.meaning_text, ''), item.meaning_ja),
+					     'supportLanguage', item.support_language,
 					     'status', CASE item.state
 					       WHEN 'active' THEN 'learning' WHEN 'mastered' THEN 'learned' ELSE item.state END,
 					     'updatedAt', item.updated_at),
 					   1, 'legacy:item:' || item.kind || ':' || item.id, item.updated_at
 					 FROM (
 					   SELECT learner_id, id, 'vocabulary' AS kind, normalized_term AS canonical_text,
-					     term AS display_text, meaning_ja, state, updated_at FROM vocabulary
+					     term AS display_text, meaning_ja, meaning_text, support_language, state, updated_at FROM vocabulary
 					   UNION ALL
-					   SELECT learner_id, id, 'phrase', normalized_phrase, phrase, meaning_ja, state, updated_at FROM phrases
+					   SELECT learner_id, id, 'phrase', normalized_phrase, phrase, meaning_ja, meaning_text,
+					     support_language, state, updated_at FROM phrases
 					 ) AS item WHERE item.learner_id = ?`,
 				)
 				.bind(learnerId),
@@ -3353,7 +3379,8 @@ export class EnglishOsRepository {
 		index: number,
 		entityId: string,
 		cardId: string,
-		item: { text: string; meaningJa: string; example: string },
+		item: { text: string; meaning: string; example: string },
+		supportLanguage: 'ja' | 'en',
 		state: 'new' | 'previewed',
 		now: string,
 	): D1PreparedStatement[] {
@@ -3371,7 +3398,8 @@ export class EnglishOsRepository {
 					kind,
 					canonicalText: normalizeEnglishIdentity(item.text),
 					displayText: item.text,
-					meaningJa: item.meaningJa,
+					meaning: item.meaning,
+					supportLanguage,
 					status: state,
 					updatedAt: now,
 				},
@@ -3408,7 +3436,7 @@ export class EnglishOsRepository {
 				{
 					id: cardId,
 					front: item.text,
-					back: `${item.meaningJa}\n${item.example}`,
+					back: `${item.meaning}\n${item.example}`,
 					dueAt: now,
 					state,
 					sourceType: kind,

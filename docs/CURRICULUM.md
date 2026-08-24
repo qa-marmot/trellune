@@ -99,6 +99,12 @@ B2 Challengeの時間目安はMinimum Core 45〜60分、推奨60〜75分、Boost
 
 UIが使用する正本は `src/data/curriculum.ts` の `CURRICULUM` である。Day 1〜90は凍結済み配列をそのまま保持し、Day 91〜180は`src/data/independent/`、Day 181〜270は`src/data/fluency/`、Day 271〜365は`src/data/b2Challenge/`のUnit別ファイルで管理する。各要素は `day`, `week`, `phase`, `theme`, `objective`, `grammar`, `vocabulary`, `phrases`, `voiceTask` を持つ。ChatGPT Projectの `03-curriculum.md` はChatGPT利用者向けの説明要約で、プロバイダにかかわらず衝突時はアプリから生成した当日プロンプトを優先する。
 
+日本語教材は引き続きこの正本を直接使用する。英語学習支援は
+`src/i18n/learningSupport.ts`がstable lesson/content/item/practice IDをkeyとして
+解決し、正本を書き換えない。英語catalogはDay 1〜365の必須fieldを完全に持ち、
+日本語への暗黙fallbackをテストで禁止する。表示言語の変更はcurriculumDay、Core、
+SRS、同期、backupへ影響しない。
+
 拡張基盤では `SUPPORTED_CURRICULUM_DAY_MAX=540`、`AVAILABLE_CURRICULUM_TOTAL_DAYS=365`、migration `0012`適用後のD1 `activeTotalDays=365`を別概念として扱う。常に`ACTIVE <= AVAILABLE <= SUPPORTED`を守る。Manifest／Stage／Unit／Lessonはリリース済みDay 1〜270を内容・順番とも変更せず包み、永続化IDとは別の決定的lesson IDを提供する。Day 270完了者は既存Core証跡からDay 271を導出し、既存progress/profileを一括更新せず、Day 271 rowは実学習開始時だけ作る。Day 366以降は構造上540まで対応していてもbusiness inputとして拒否する。
 
 ## 文法の導入と再使用

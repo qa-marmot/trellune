@@ -2,11 +2,12 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
 import { beforeAll, describe, expect, it } from 'vitest';
 import publishedSchema from '../../chatgpt-project-sources/05-session-schema.json';
+import publishedSchemaV11 from '../../chatgpt-project-sources/08-session-schema-1.1.json';
 import {
 	AVAILABLE_CURRICULUM_TOTAL_DAYS,
 	SUPPORTED_CURRICULUM_DAY_MAX,
 } from '../curriculum/constants';
-import { ChatGptSessionSchema } from './schemas';
+import { ChatGptSessionSchema, SessionJsonV11Schema } from './schemas';
 
 const canonicalBoost = {
 	schemaVersion: '1.0',
@@ -33,11 +34,54 @@ const canonicalBoost = {
 };
 
 let validatePublishedSchema: ReturnType<Ajv2020['compile']>;
+let validatePublishedSchemaV11: ReturnType<Ajv2020['compile']>;
 
 beforeAll(async () => {
 	const ajv = new Ajv2020({ strict: true, allErrors: true });
 	addFormats(ajv);
 	validatePublishedSchema = ajv.compile(publishedSchema);
+	validatePublishedSchemaV11 = ajv.compile(publishedSchemaV11);
+});
+
+describe('published SESSION_JSON 1.1 schema parity', () => {
+	const canonicalEnglish = {
+		schemaVersion: '1.1',
+		supportLanguage: 'en',
+		sessionId: '0198ba29-89b5-4000-8000-000000000011',
+		sessionType: 'core',
+		curriculumDay: 365,
+		occurredAt: '2026-08-10T09:00:00.000Z',
+		durationMinutes: 10,
+		boost: null,
+		summary: 'Completed an English learning conversation.',
+		evaluation: {
+			taskCompletion: 4,
+			grammar: 4,
+			vocabulary: 4,
+			fluency: 4,
+			interaction: 4,
+			comment: 'Clear interaction with one priority correction.',
+		},
+		mistakes: [],
+		newVocabulary: [],
+		newPhrases: [],
+		previewGrammar: [],
+		reviewCards: [],
+	};
+
+	it.each([
+		['valid English Core', canonicalEnglish],
+		['valid Japanese support label', { ...canonicalEnglish, supportLanguage: 'ja' }],
+		['unknown legacy field rejected', { ...canonicalEnglish, summaryJa: 'legacy alias' }],
+		['Day 540 structural bound accepted', { ...canonicalEnglish, curriculumDay: 540 }],
+		['Day 541 rejected', { ...canonicalEnglish, curriculumDay: 541 }],
+	])('%s', (_label, fixture) => {
+		const runtimeAccepted = SessionJsonV11Schema.safeParse(fixture).success;
+		const publishedAccepted = validatePublishedSchemaV11(fixture) as boolean;
+		expect(publishedAccepted, JSON.stringify(validatePublishedSchemaV11.errors)).toBe(
+			runtimeAccepted,
+		);
+	});
 });
 
 describe('published SESSION_JSON schema parity', () => {

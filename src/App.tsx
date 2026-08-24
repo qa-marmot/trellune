@@ -9,20 +9,28 @@ import {
 	useParams,
 	useSearchParams,
 } from 'react-router-dom';
-import { CURRICULUM } from './data/curriculum';
 import {
 	AVAILABLE_CURRICULUM_TOTAL_DAYS,
-	CURRICULUM_MANIFEST,
 	type PracticeBlock,
 	type PracticePrompt,
 } from './curriculum';
 import { AppShell, PageHeader, ProgressRing } from './components/AppShell';
 import { Icon } from './components/Icon';
-import { MAX_SESSION_SOURCE_BYTES, parseSession, SAMPLE_SESSION_JSON } from './lib/sessionImport';
+import {
+	MAX_SESSION_SOURCE_BYTES,
+	parseSession,
+	SAMPLE_SESSION_JSON,
+	SAMPLE_SESSION_JSON_EN,
+} from './lib/sessionImport';
 import { isDemoMode } from './demo';
 import { parseBaselineAssessment } from './lib/baselineImport';
 import { MAX_ASSESSMENT_SOURCE_BYTES, parseStageAssessment } from './lib/assessmentImport';
-import { BoostModeSchema, IanaTimeZoneSchema, SessionJsonSchema } from './lib/schemas';
+import {
+	BoostModeSchema,
+	ExternalSessionJsonSchema,
+	IanaTimeZoneSchema,
+	normalizeExternalSession,
+} from './lib/schemas';
 import type { BoostMode } from './lib/schemas';
 import {
 	buildBaselinePrompt,
@@ -64,7 +72,7 @@ import {
 	type BackupPreview,
 } from './storage/backup';
 import { type AppData, useAppState } from './state/AppState';
-import { localizeUiMessage, useLocale } from './i18n';
+import { localizeUiMessage, useLearningSupport, useLocale } from './i18n';
 import { usePwaUpdate, type PwaUpdateStatus } from './pwa/update';
 
 type CoreDisplayStep = keyof AppData['core'];
@@ -879,12 +887,13 @@ function StageAssessmentPage() {
 function Today() {
 	const { data } = useAppState();
 	const { locale, t } = useLocale();
+	const { curriculum, manifest } = useLearningSupport();
 	const navigate = useNavigate();
-	const current = CURRICULUM[data.currentDay - 1] ?? CURRICULUM[0];
-	const currentLesson = CURRICULUM_MANIFEST.lessons[data.currentDay - 1];
+	const current = curriculum[data.currentDay - 1] ?? curriculum[0]!;
+	const currentLesson = manifest.lessons[data.currentDay - 1];
 	const currentPracticeMinutes =
 		currentLesson?.practiceBlocks.reduce((sum, block) => sum + block.estimatedMinutes, 0) ?? 0;
-	const currentStage = CURRICULUM_MANIFEST.stages.find(
+	const currentStage = manifest.stages.find(
 		(stage) => stage.startDay <= data.currentDay && data.currentDay <= stage.endDay,
 	);
 	const completed = Object.values(data.core).filter(Boolean).length;
@@ -1004,15 +1013,15 @@ function Today() {
 function Curriculum() {
 	const { data } = useAppState();
 	const { locale, t } = useLocale();
+	const { curriculum, manifest } = useLearningSupport();
 	const navigate = useNavigate();
 	const initialStage =
-		CURRICULUM_MANIFEST.stages.find(
+		manifest.stages.find(
 			(stage) => stage.startDay <= data.currentDay && data.currentDay <= stage.endDay,
-		) ?? CURRICULUM_MANIFEST.stages[0]!;
+		) ?? manifest.stages[0]!;
 	const [stageId, setStageId] = useState(initialStage.id);
-	const stage =
-		CURRICULUM_MANIFEST.stages.find((candidate) => candidate.id === stageId) ?? initialStage;
-	const units = CURRICULUM_MANIFEST.units.filter((unit) => unit.stageId === stage.id);
+	const stage = manifest.stages.find((candidate) => candidate.id === stageId) ?? initialStage;
+	const units = manifest.units.filter((unit) => unit.stageId === stage.id);
 	const selectedStageContainsCurrentDay =
 		stage.startDay <= data.currentDay && data.currentDay <= stage.endDay;
 	return (
@@ -1027,7 +1036,7 @@ function Curriculum() {
 				}
 			/>
 			<div className="phase-tabs" role="tablist" aria-label={t('curriculum.stage')}>
-				{CURRICULUM_MANIFEST.stages.map((item, index) => (
+				{manifest.stages.map((item, index) => (
 					<button
 						key={item.id}
 						id={`phase-tab-${index}`}
@@ -1041,10 +1050,8 @@ function Curriculum() {
 							if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
 							event.preventDefault();
 							const direction = event.key === 'ArrowRight' ? 1 : -1;
-							const next =
-								(index + direction + CURRICULUM_MANIFEST.stages.length) %
-								CURRICULUM_MANIFEST.stages.length;
-							setStageId(CURRICULUM_MANIFEST.stages[next]!.id);
+							const next = (index + direction + manifest.stages.length) % manifest.stages.length;
+							setStageId(manifest.stages[next]!.id);
 							document.getElementById(`phase-tab-${next}`)?.focus();
 						}}
 					>
@@ -1056,7 +1063,7 @@ function Curriculum() {
 				id="curriculum-phase-panel"
 				className="curriculum-list"
 				role="tabpanel"
-				aria-labelledby={`phase-tab-${CURRICULUM_MANIFEST.stages.indexOf(stage)}`}
+				aria-labelledby={`phase-tab-${manifest.stages.indexOf(stage)}`}
 			>
 				<p className="curriculum-stage-guidance">
 					{locale === 'ja'
@@ -1093,8 +1100,9 @@ function Curriculum() {
 								</span>
 							</summary>
 							<div className="curriculum-unit__days">
-								{CURRICULUM.filter((day) => unit.startDay <= day.day && day.day <= unit.endDay).map(
-									(day) => {
+								{curriculum
+									.filter((day) => unit.startDay <= day.day && day.day <= unit.endDay)
+									.map((day) => {
 										const statusKey = data.completedDays.includes(day.day)
 											? 'complete'
 											: day.day === data.currentDay
@@ -1127,8 +1135,7 @@ function Curriculum() {
 												<span className="status-chip">{status}</span>
 											</button>
 										);
-									},
-								)}
+									})}
 							</div>
 						</details>
 					);
@@ -1142,9 +1149,10 @@ function CurriculumDetail() {
 	const params = useParams();
 	const { data } = useAppState();
 	const { locale, t } = useLocale();
+	const { curriculum, manifest } = useLearningSupport();
 	const dayNumber = Number(params.day ?? data.currentDay);
-	const day = CURRICULUM[dayNumber - 1] ?? CURRICULUM[0];
-	const lesson = CURRICULUM_MANIFEST.lessons[day.day - 1];
+	const day = curriculum[dayNumber - 1] ?? curriculum[0]!;
+	const lesson = manifest.lessons[day.day - 1];
 	return (
 		<AppShell>
 			<PageHeader title={`Day ${day.day} · ${day.theme}`} description={day.objective} />
@@ -1271,10 +1279,11 @@ function practiceBlockIsReviewed(
 function Grammar() {
 	const { data, completeStep } = useAppState();
 	const { locale, t } = useLocale();
-	const day = CURRICULUM[data.currentDay - 1] ?? CURRICULUM[0];
-	const lesson = CURRICULUM_MANIFEST.lessons[day.day - 1];
+	const { curriculum, manifest } = useLearningSupport();
+	const day = curriculum[data.currentDay - 1] ?? curriculum[0]!;
+	const lesson = manifest.lessons[day.day - 1];
 	const practiceBlocks = lesson?.practiceBlocks ?? [];
-	const stage = CURRICULUM_MANIFEST.stages.find(
+	const stage = manifest.stages.find(
 		(candidate) => candidate.startDay <= day.day && day.day <= candidate.endDay,
 	)!;
 	const [answer, setAnswer] = useState('');
@@ -1601,6 +1610,7 @@ function Grammar() {
 function Library({ kind }: { kind: 'vocabulary' | 'phrases' }) {
 	const { data } = useAppState();
 	const { locale, t } = useLocale();
+	const { curriculum } = useLearningSupport();
 	const learningKind = kind === 'vocabulary' ? 'vocabulary' : 'phrase';
 	const normalize = (value: string) =>
 		value.normalize('NFKC').trim().toLocaleLowerCase('en-US').replace(/\s+/gu, ' ');
@@ -1608,7 +1618,7 @@ function Library({ kind }: { kind: 'vocabulary' | 'phrases' }) {
 	const acquiredByText = new Map(acquired.map((item) => [normalize(item.displayText), item]));
 	const curriculumItems =
 		kind === 'vocabulary'
-			? CURRICULUM.flatMap((day) =>
+			? curriculum.flatMap((day) =>
 					day.vocabulary.map((item) => ({
 						term: item.text,
 						note: `${item.meaning} · ${day.theme}`,
@@ -1616,7 +1626,7 @@ function Library({ kind }: { kind: 'vocabulary' | 'phrases' }) {
 						status: acquiredByText.get(normalize(item.text))?.status ?? 'curriculum',
 					})),
 				)
-			: CURRICULUM.flatMap((day) =>
+			: curriculum.flatMap((day) =>
 					day.phrases.map((item) => ({
 						term: item.text,
 						note: `${item.meaning} · ${day.theme}`,
@@ -1631,7 +1641,7 @@ function Library({ kind }: { kind: 'vocabulary' | 'phrases' }) {
 			.filter((item) => !curriculumIdentities.has(normalize(item.displayText)))
 			.map((item) => ({
 				term: item.displayText,
-				note: `${item.meaningJa} · Voice取込`,
+				note: `${item.meaning} · ${locale === 'ja' ? 'Voice取込' : 'Voice import'}`,
 				day: 0,
 				status: item.status,
 			})),
@@ -1799,8 +1809,9 @@ function Mistakes() {
 function Voice() {
 	const { data } = useAppState();
 	const { locale, t } = useLocale();
+	const { curriculum } = useLearningSupport();
 	const [searchParams] = useSearchParams();
-	const day = CURRICULUM[data.currentDay - 1] ?? CURRICULUM[0];
+	const day = curriculum[data.currentDay - 1] ?? curriculum[0]!;
 	const requestedMode = searchParams.get('mode');
 	const initialMode =
 		requestedMode === 'baseline' ||
@@ -1816,7 +1827,7 @@ function Voice() {
 	const boostMode: BoostMode = requestedBoost.success ? requestedBoost.data : 'speaking_sprint';
 	const provider = getConversationProviderPreset(providerId);
 	const context: LearnerPromptContext = useMemo(() => {
-		const nextDay = CURRICULUM[day.day];
+		const nextDay = curriculum[day.day];
 		return {
 			learnerName: data.learnerName || 'Learner',
 			curriculumDay: day.day,
@@ -1836,6 +1847,7 @@ function Voice() {
 			remainingNewWords: data.remainingAcquisition.words,
 			remainingNewPhrases: data.remainingAcquisition.phrases,
 			remainingPreviewGrammar: data.remainingAcquisition.previewGrammar,
+			supportLanguage: locale,
 			nextGrammar: nextDay
 				? {
 						curriculumDay: nextDay.day,
@@ -1845,13 +1857,21 @@ function Voice() {
 					}
 				: null,
 		};
-	}, [data.learnerName, data.mistakes, data.remainingAcquisition, data.reviewCards, day]);
+	}, [
+		data.learnerName,
+		data.mistakes,
+		data.remainingAcquisition,
+		data.reviewCards,
+		day,
+		curriculum,
+		locale,
+	]);
 	const prompt = useMemo(() => {
-		if (mode === 'baseline') return buildBaselinePrompt(data.learnerName);
+		if (mode === 'baseline') return buildBaselinePrompt(data.learnerName, locale);
 		if (mode === 'study') return buildStudyContext(context);
 		if (mode === 'weekly') {
 			const startDay = Math.max(1, day.day - ((day.day - 1) % 7));
-			const covered = CURRICULUM.filter((item) => item.day >= startDay && item.day <= day.day);
+			const covered = curriculum.filter((item) => item.day >= startDay && item.day <= day.day);
 			return buildWeeklyPrompt(
 				startDay,
 				day.day,
@@ -1859,6 +1879,7 @@ function Voice() {
 				covered.map((item) => item.grammar.title),
 				covered.flatMap((item) => item.phrases.map((phrase) => phrase.text)),
 				context.recentMistakes.filter((item) => item.repetitions >= 3),
+				locale,
 			);
 		}
 		if (mode.startsWith('boost-')) {
@@ -1870,7 +1891,7 @@ function Voice() {
 			);
 		}
 		return buildCorePrompt(context, providerId);
-	}, [boostMode, context, data.learnerName, mode, providerId]);
+	}, [boostMode, context, curriculum, data.learnerName, day.day, locale, mode, providerId]);
 	if (mode.startsWith('boost-') && !Object.values(data.core).every(Boolean)) {
 		return <Navigate to="/today" replace />;
 	}
@@ -1939,7 +1960,7 @@ function Voice() {
 						>
 							{CONVERSATION_PROVIDER_PRESETS.map((preset) => (
 								<option key={preset.id} value={preset.id}>
-									{preset.label} (
+									{locale === 'ja' ? preset.label : preset.labelEn} (
 									{preset.testedStatus === 'tested'
 										? locale === 'ja'
 											? '確認済み'
@@ -1951,7 +1972,7 @@ function Voice() {
 								</option>
 							))}
 						</select>
-						<small>{provider.setupNoteJa}</small>
+						<small>{locale === 'ja' ? provider.setupNoteJa : provider.setupNoteEn}</small>
 					</label>
 					{(mode === 'core' || mode.startsWith('boost-')) &&
 					provider.capabilities.voiceConversation !== 'tested' ? (
@@ -2035,15 +2056,16 @@ function SessionImport() {
 	const [result, setResult] = useState<ReturnType<typeof parseSession> | null>(null);
 	const [message, setMessage] = useState('');
 	const [messageIsError, setMessageIsError] = useState(false);
+	const sampleSession = locale === 'en' ? SAMPLE_SESSION_JSON_EN : SAMPLE_SESSION_JSON;
 	const structured = result?.session
-		? SessionJsonSchema.safeParse(result.session.payload)
+		? ExternalSessionJsonSchema.safeParse(result.session.payload)
 		: undefined;
 	const sourceBytes = new TextEncoder().encode(source).byteLength;
 	useEffect(() => () => setEditorDirty(false), [setEditorDirty]);
 	const preview = () => {
 		setMessage('');
 		setMessageIsError(false);
-		setResult(parseSession(source));
+		setResult(parseSession(source, locale));
 	};
 	const save = async () => {
 		if (!result?.session) return;
@@ -2075,7 +2097,7 @@ function SessionImport() {
 								setEditorDirty(event.target.value.trim().length > 0);
 								setResult(null);
 							}}
-							placeholder={SAMPLE_SESSION_JSON}
+							placeholder={sampleSession}
 						/>
 						<small id="session-import-limit">
 							{locale === 'ja' ? '入力上限 1MB（現在 ' : 'Input limit 1 MB (currently '}
@@ -2091,7 +2113,7 @@ function SessionImport() {
 								className="button"
 								type="button"
 								onClick={() => {
-									setSource(SAMPLE_SESSION_JSON);
+									setSource(sampleSession);
 									setEditorDirty(true);
 									setResult(null);
 									setMessage(
@@ -2240,7 +2262,7 @@ function Sessions() {
 		if (kind !== 'all' && session.kind !== kind) return false;
 		if (date && studyDateAt(session.completedAt, data.timeZone) !== date) return false;
 		if (mode) {
-			const payload = SessionJsonSchema.safeParse(session.payload);
+			const payload = ExternalSessionJsonSchema.safeParse(session.payload);
 			if (!payload.success || payload.data.boost?.mode !== mode) return false;
 		}
 		return true;
@@ -2367,7 +2389,8 @@ function SessionDetail() {
 			</AppShell>
 		);
 	}
-	const payload = SessionJsonSchema.safeParse(session.payload);
+	const externalPayload = ExternalSessionJsonSchema.safeParse(session.payload);
+	const payload = externalPayload.success ? normalizeExternalSession(externalPayload.data) : null;
 	return (
 		<AppShell>
 			<PageHeader
@@ -2392,18 +2415,20 @@ function SessionDetail() {
 					<dd>{session.score}</dd>
 					<dt>{locale === 'ja' ? '間違い' : 'Mistakes'}</dt>
 					<dd>{locale === 'ja' ? `${session.mistakes.length}件` : session.mistakes.length}</dd>
-					{payload.success ? (
+					{payload ? (
 						<>
 							<dt>{locale === 'ja' ? 'カリキュラム日' : 'Curriculum day'}</dt>
-							<dd>Day {payload.data.curriculumDay}</dd>
-							{payload.data.boost ? (
+							<dd>Day {payload.curriculumDay}</dd>
+							{payload.boost ? (
 								<>
 									<dt>{locale === 'ja' ? 'Boostモード' : 'Boost mode'}</dt>
-									<dd>{payload.data.boost.mode}</dd>
+									<dd>{payload.boost.mode}</dd>
 								</>
 							) : null}
 							<dt>{locale === 'ja' ? '評価コメント' : 'Evaluation note'}</dt>
-							<dd>{payload.data.evaluation.commentJa}</dd>
+							<dd>{payload.evaluation.comment}</dd>
+							<dt>{locale === 'ja' ? '記録言語' : 'Stored language'}</dt>
+							<dd>{payload.supportLanguage === 'ja' ? '日本語' : 'English'}</dd>
 						</>
 					) : null}
 				</dl>
@@ -2502,7 +2527,7 @@ function Boost() {
 	const navigate = useNavigate();
 	const [minutes, setMinutes] = useState(15);
 	const scoredSessions = data.sessions
-		.map((session) => SessionJsonSchema.safeParse(session.payload))
+		.map((session) => ExternalSessionJsonSchema.safeParse(session.payload))
 		.filter((result) => result.success)
 		.map((result) => result.data);
 	const latestSessionId = data.sessions[0]?.sessionId;

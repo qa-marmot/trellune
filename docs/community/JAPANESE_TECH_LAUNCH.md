@@ -16,7 +16,7 @@ AI APIを使わず、普段使っている会話AIと連携する365日英語学
    a public demo dependency.
 6. Testing and OSS safety: public-tree checks, PWA update tests, D1 tests, and
    the contributor path.
-7. Honest limitations: Japanese-first curriculum support, manual provider
+7. Honest limitations: manual provider
    verification, physical-device evidence, and no CEFR certification claim.
 8. Demo, source, and a focused request for feedback.
 

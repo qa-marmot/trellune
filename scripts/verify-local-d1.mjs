@@ -16,8 +16,8 @@ const migrationFiles = readdirSync(join(root, 'migrations'), { withFileTypes: tr
 assert.equal(migrationFiles[0], '0001_initial.sql', 'the migration chain must start at 0001');
 assert.equal(
 	migrationFiles.at(-1),
-	'0012_activate_b2_challenge_curriculum.sql',
-	'the migration chain must end at the B2 Challenge curriculum activation',
+	'0013_language_neutral_session_support.sql',
+	'the migration chain must end at language-neutral session support',
 );
 const stageAssessmentMigrationSql = readFileSync(
 	join(root, 'migrations', '0009_stage_assessments.sql'),
@@ -170,15 +170,25 @@ function hash(value) {
 }
 
 async function api(baseUrl, path, { user, method = 'GET', body } = {}) {
-	const response = await fetch(`${baseUrl}${path}`, {
-		method,
-		headers: {
-			accept: 'application/json',
-			...(body === undefined ? {} : { 'content-type': 'application/json' }),
-			...(user ? { 'x-english-os-local-user': user } : {}),
-		},
-		body: body === undefined ? undefined : JSON.stringify(body),
-	});
+	let response;
+	for (let attempt = 0; attempt < 3; attempt += 1) {
+		try {
+			response = await fetch(`${baseUrl}${path}`, {
+				method,
+				headers: {
+					accept: 'application/json',
+					...(body === undefined ? {} : { 'content-type': 'application/json' }),
+					...(user ? { 'x-english-os-local-user': user } : {}),
+				},
+				body: body === undefined ? undefined : JSON.stringify(body),
+			});
+			break;
+		} catch (error) {
+			if (attempt === 2) throw error;
+			await new Promise((resolveDelay) => setTimeout(resolveDelay, 150));
+		}
+	}
+	assert.ok(response, 'local Worker must return a response');
 	const text = await response.text();
 	return { status: response.status, body: text ? JSON.parse(text) : null };
 }
@@ -266,6 +276,35 @@ function sessionPayload({
 					{ front: 'Past form?', back: 'went', sourceMistakeIndex: mistakeCount - 1 },
 				]
 			: [],
+	};
+}
+
+function englishSessionPayload(input) {
+	const legacy = sessionPayload(input);
+	const { summaryJa: _summaryJa, evaluation, ...common } = legacy;
+	const { commentJa: _commentJa, ...scores } = evaluation;
+	return {
+		...common,
+		schemaVersion: '1.1',
+		supportLanguage: 'en',
+		summary: input.summaryJa,
+		evaluation: { ...scores, comment: 'Local D1 English regression.' },
+		mistakes: legacy.mistakes.map(({ explanationJa: _explanationJa, ...item }) => ({
+			...item,
+			explanation: 'Use the simple past for a finished time.',
+		})),
+		newVocabulary: legacy.newVocabulary.map(({ meaningJa: _meaningJa, ...item }) => ({
+			...item,
+			meaning: 'a common greeting',
+		})),
+		newPhrases: legacy.newPhrases.map(({ meaningJa: _meaningJa, ...item }) => ({
+			...item,
+			meaning: 'a useful conversational expression',
+		})),
+		previewGrammar: legacy.previewGrammar.map(({ noteJa: _noteJa, ...item }) => ({
+			...item,
+			note: 'Preview note.',
+		})),
 	};
 }
 
@@ -455,11 +494,11 @@ async function verifyFreshDatabase() {
 		const now = new Date().toISOString();
 		const occurredAt = `${today}T09:00:00+09:00`;
 		const user = 'fresh-d1-regression';
-		const boundaryPayload = sessionPayload({
+		const boundaryPayload = englishSessionPayload({
 			sessionId: '90909090-9090-4090-8090-909090909090',
 			sessionType: 'core',
 			occurredAt,
-			summaryJa: 'ACTIVE境界Day 365',
+			summaryJa: 'ACTIVE boundary Day 365',
 			curriculumDay: 365,
 		});
 		const boundaryImport = await api(worker.baseUrl, '/api/v1/session-imports', {
@@ -479,6 +518,7 @@ async function verifyFreshDatabase() {
 			queryRows(
 				freshPersistence,
 				`SELECT imports.curriculum_day, progress.curriculum_day AS progress_day,
+				        imports.support_language, imports.summary_ja, imports.summary_text,
 				        mirror.version AS mirror_version
 				 FROM session_imports AS imports
 				 JOIN learners AS learner ON learner.id = imports.learner_id
@@ -492,7 +532,16 @@ async function verifyFreshDatabase() {
 				   AND imports.curriculum_day = 365
 				   AND imports.external_session_id = '${boundaryPayload.sessionId}'`,
 			),
-			[{ curriculum_day: 365, progress_day: 365, mirror_version: 1 }],
+			[
+				{
+					curriculum_day: 365,
+					progress_day: 365,
+					support_language: 'en',
+					summary_ja: null,
+					summary_text: 'ACTIVE boundary Day 365',
+					mirror_version: 1,
+				},
+			],
 			'ACTIVE boundary Day 365 must commit physical and sync records',
 		);
 		for (const [curriculumDay, sessionId, operationId] of [
@@ -718,7 +767,7 @@ async function verifyFreshDatabase() {
 		}
 
 		const bootstrap = await api(worker.baseUrl, '/api/v1/sync/bootstrap', { user });
-		assert.equal(bootstrap.status, 200);
+		assert.equal(bootstrap.status, 200, JSON.stringify(bootstrap.body));
 		assert.equal(bootstrap.body.data.activeTotalDays, 365);
 		const entities = bootstrap.body.data.entities;
 		const mistakes = entities.filter(
@@ -1879,9 +1928,11 @@ async function verifyLegacyMigration() {
 	const activationMigration = '0010_activate_independent_curriculum.sql';
 	const fluencyActivationMigration = '0011_activate_fluency_curriculum.sql';
 	const b2ChallengeActivationMigration = '0012_activate_b2_challenge_curriculum.sql';
+	const languageNeutralSessionMigration = '0013_language_neutral_session_support.sql';
 	const insertGuardIndex = laterMigrations.indexOf(insertGuardMigration);
 	assert.ok(insertGuardIndex >= 0);
-	assert.equal(laterMigrations.at(-1), b2ChallengeActivationMigration);
+	assert.ok(laterMigrations.includes(b2ChallengeActivationMigration));
+	assert.equal(laterMigrations.at(-1), languageNeutralSessionMigration);
 	for (const migration of laterMigrations.slice(0, insertGuardIndex)) {
 		executeFile(legacyPersistence, join(root, 'migrations', migration));
 	}
@@ -2003,6 +2054,30 @@ async function verifyLegacyMigration() {
 		 FROM curriculum_days WHERE day_number <= 270 ORDER BY day_number`,
 	);
 	executeFile(legacyPersistence, join(root, 'migrations', b2ChallengeActivationMigration));
+	const legacySessionSupportBeforeNeutralMigration = queryRows(
+		legacyPersistence,
+		`SELECT id, summary_ja, evaluation_comment_ja FROM session_imports ORDER BY id`,
+	);
+	executeFile(legacyPersistence, join(root, 'migrations', languageNeutralSessionMigration));
+	assert.deepEqual(
+		queryRows(
+			legacyPersistence,
+			`SELECT id, summary_ja, evaluation_comment_ja FROM session_imports ORDER BY id`,
+		),
+		legacySessionSupportBeforeNeutralMigration,
+		'0013 must preserve every legacy Japanese session value',
+	);
+	assert.deepEqual(
+		queryRows(
+			legacyPersistence,
+			`SELECT COUNT(*) AS missing FROM session_imports
+			 WHERE support_language != 'ja'
+			    OR summary_text IS NOT summary_ja
+			    OR evaluation_comment_text IS NOT evaluation_comment_ja`,
+		),
+		[{ missing: 0 }],
+		'0013 must backfill neutral session fields for every legacy row',
+	);
 	assert.deepEqual(
 		queryRows(
 			legacyPersistence,
@@ -2200,7 +2275,7 @@ async function verifyLegacyMigration() {
 	const worker = await startWorker(legacyPersistence);
 	try {
 		const bootstrap = await api(worker.baseUrl, '/api/v1/sync/bootstrap', { user });
-		assert.equal(bootstrap.status, 200);
+		assert.equal(bootstrap.status, 200, JSON.stringify(bootstrap.body));
 		const sessions = bootstrap.body.data.entities.filter(
 			(entity) => entity.entityType === 'session' && entity.operation === 'upsert',
 		);
