@@ -281,30 +281,48 @@ function sessionPayload({
 
 function englishSessionPayload(input) {
 	const legacy = sessionPayload(input);
-	const { summaryJa: _summaryJa, evaluation, ...common } = legacy;
-	const { commentJa: _commentJa, ...scores } = evaluation;
 	return {
-		...common,
 		schemaVersion: '1.1',
 		supportLanguage: 'en',
+		sessionId: legacy.sessionId,
+		sessionType: legacy.sessionType,
+		curriculumDay: legacy.curriculumDay,
+		occurredAt: legacy.occurredAt,
+		durationMinutes: legacy.durationMinutes,
+		boost: legacy.boost,
 		summary: input.summaryJa,
-		evaluation: { ...scores, comment: 'Local D1 English regression.' },
-		mistakes: legacy.mistakes.map(({ explanationJa: _explanationJa, ...item }) => ({
-			...item,
+		evaluation: {
+			taskCompletion: legacy.evaluation.taskCompletion,
+			grammar: legacy.evaluation.grammar,
+			vocabulary: legacy.evaluation.vocabulary,
+			fluency: legacy.evaluation.fluency,
+			interaction: legacy.evaluation.interaction,
+			comment: 'Local D1 English regression.',
+		},
+		mistakes: legacy.mistakes.map((item) => ({
+			category: item.category,
+			learnerSaid: item.learnerSaid,
+			suggested: item.suggested,
 			explanation: 'Use the simple past for a finished time.',
+			severity: item.severity,
 		})),
-		newVocabulary: legacy.newVocabulary.map(({ meaningJa: _meaningJa, ...item }) => ({
-			...item,
+		newVocabulary: legacy.newVocabulary.map((item) => ({
+			text: item.text,
 			meaning: 'a common greeting',
+			example: item.example,
 		})),
-		newPhrases: legacy.newPhrases.map(({ meaningJa: _meaningJa, ...item }) => ({
-			...item,
+		newPhrases: legacy.newPhrases.map((item) => ({
+			text: item.text,
 			meaning: 'a useful conversational expression',
+			example: item.example,
 		})),
-		previewGrammar: legacy.previewGrammar.map(({ noteJa: _noteJa, ...item }) => ({
-			...item,
+		previewGrammar: legacy.previewGrammar.map((item) => ({
+			topicId: item.topicId,
+			title: item.title,
 			note: 'Preview note.',
+			status: item.status,
 		})),
+		reviewCards: legacy.reviewCards,
 	};
 }
 
