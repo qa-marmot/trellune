@@ -11,34 +11,41 @@ async function onboard(page: Page): Promise<void> {
 async function indexedDbState(page: Page) {
 	return page.evaluate(
 		() =>
-			new Promise<{ outbox: number; conflicts: number; lastSuccessAt: string | null }>(
-				(resolve, reject) => {
-					const request = indexedDB.open('english-os');
-					request.onerror = () => reject(request.error);
-					request.onsuccess = () => {
-						const database = request.result;
-						const transaction = database.transaction(
-							['outbox', 'conflicts', 'syncState'],
-							'readonly',
-						);
-						const outbox = transaction.objectStore('outbox').count();
-						const conflicts = transaction.objectStore('conflicts').count();
-						const syncState = transaction.objectStore('syncState').get('current');
-						transaction.oncomplete = () => {
-							database.close();
-							resolve({
-								outbox: outbox.result,
-								conflicts: conflicts.result,
-								lastSuccessAt:
-									typeof syncState.result?.lastSuccessAt === 'string'
-										? syncState.result.lastSuccessAt
-										: null,
-							});
-						};
-						transaction.onerror = () => reject(transaction.error);
+			new Promise<{
+				outbox: number;
+				conflicts: number;
+				lastSuccessAt: string | null;
+				lastAttemptStatus: string | null;
+			}>((resolve, reject) => {
+				const request = indexedDB.open('english-os');
+				request.onerror = () => reject(request.error);
+				request.onsuccess = () => {
+					const database = request.result;
+					const transaction = database.transaction(
+						['outbox', 'conflicts', 'syncState'],
+						'readonly',
+					);
+					const outbox = transaction.objectStore('outbox').count();
+					const conflicts = transaction.objectStore('conflicts').count();
+					const syncState = transaction.objectStore('syncState').get('current');
+					transaction.oncomplete = () => {
+						database.close();
+						resolve({
+							outbox: outbox.result,
+							conflicts: conflicts.result,
+							lastSuccessAt:
+								typeof syncState.result?.lastSuccessAt === 'string'
+									? syncState.result.lastSuccessAt
+									: null,
+							lastAttemptStatus:
+								typeof syncState.result?.lastAttemptStatus === 'string'
+									? syncState.result.lastAttemptStatus
+									: null,
+						});
 					};
-				},
-			),
+					transaction.onerror = () => reject(transaction.error);
+				};
+			}),
 	);
 }
 
@@ -247,10 +254,11 @@ test('blocks a conflicting operation and preserves both local and server values'
 	await page.getByRole('checkbox', { name: '同期' }).click();
 	await expect(page.getByRole('checkbox', { name: '同期' })).toBeChecked();
 	await expect.poll(async () => (await indexedDbState(page)).conflicts).toBe(1);
+	await expect.poll(async () => (await indexedDbState(page)).lastAttemptStatus).toBe('blocked');
 	const state = await indexedDbState(page);
-	// The conflicted profile is blocked and the later daily-progress operation remains pending.
+	// Bootstrap may record its own successful read before the write conflict. The run itself must
+	// still finish blocked, with the conflicted profile and later daily-progress operation retained.
 	expect(state.outbox).toBe(2);
-	expect(state.lastSuccessAt).toBeNull();
 });
 
 test('hydrates an empty device from the authenticated remote bootstrap', async ({ page }) => {

@@ -55,6 +55,15 @@ describe('provider-neutral learning conversation contract', () => {
 		expect(getConversationProviderPreset('gemini').capabilities.voiceConversation).toBe(
 			'unverified',
 		);
+		expect(CONVERSATION_PROVIDER_PRESETS.slice(0, 3).map((preset) => preset.officialUrl)).toEqual([
+			'https://chatgpt.com/',
+			'https://claude.ai/new',
+			'https://gemini.google.com/app',
+		]);
+		expect(getConversationProviderPreset('generic').officialUrl).toBeUndefined();
+		expect(
+			CONVERSATION_PROVIDER_PRESETS.map((preset) => preset.officialUrl ?? '').join(' '),
+		).not.toContain('prompt=');
 	});
 
 	it('renders a portable request while leaving the final trust boundary with SESSION_JSON validation', () => {

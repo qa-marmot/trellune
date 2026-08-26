@@ -29,6 +29,9 @@ state. The product UI and bundled learner support are English here. See the
   inactive.
 - **Local-first and offline-capable:** Learning data lives in IndexedDB; core
   screens remain available after they have been cached.
+- **Continuity without shortcuts:** Large required-review sets can be paused and
+  resumed deterministically, and unfinished practice can be restored from a
+  bounded, device-only draft without creating progress or sync data.
 - **A complete practice loop:** Retrieval, grammar transfer, productive
   vocabulary, Reading/Writing Labs, authored feedback, self-review, retry, and
   authentic conversation are explicit steps.
@@ -69,6 +72,10 @@ flowchart LR
    AI chat. Send it as text first; start Voice only when appropriate.
 3. After the conversation, request `SESSION_JSON`, paste it into Trellune, and
    review strict validation before anything is saved.
+
+Today also distinguishes your preferred study budget from the current Stage's
+actual Core minimum and recommended range. A preference never reduces required
+Core work or silently discards review debt.
 
 The application is the trust boundary: malformed output, unknown fields, future
 days, and acquisition-limit violations are rejected locally. The ChatGPT preset

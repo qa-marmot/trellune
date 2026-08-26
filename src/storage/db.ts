@@ -1227,6 +1227,8 @@ export async function loadAppData(): Promise<AppData> {
 				.map((item) => item.curriculumDay)
 				.sort((a, b) => a - b),
 			reviewCount: batchCards.length,
+			reviewBatchTotal: batch.cardIds.length,
+			reviewBatchCompleted: batch.completedCardIds.length,
 			reviewCards: batchCards.map((card) => ({
 				id: card.id,
 				front: card.front,
