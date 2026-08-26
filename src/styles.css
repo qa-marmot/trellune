@@ -1252,7 +1252,7 @@ input[type='range'] {
 
 .bridge-layout {
 	display: grid;
-	gap: var(--space-lg);
+	gap: min(var(--space-lg), 24px);
 }
 .mode-list {
 	display: flex;
@@ -1277,15 +1277,17 @@ input[type='range'] {
 	min-width: 0;
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
-	gap: var(--space-md);
-	padding: var(--space-lg);
+	gap: min(var(--space-md), 16px);
+	padding: min(var(--space-lg), 24px);
 	border-radius: var(--radius-card);
 	background: var(--color-paper-3);
 }
 .bridge-steps {
+	min-width: 0;
+	max-width: 100%;
 	display: grid;
 	gap: var(--space-sm);
-	padding: var(--space-md);
+	padding: min(var(--space-md), 16px);
 	border: var(--rule-hair) solid var(--color-rule);
 	border-radius: var(--radius-sm);
 	background: var(--color-paper);

@@ -45,3 +45,24 @@ test('shows a provider-neutral five-step bridge and only official preset links',
 	await expect(page.locator('.bridge-steps li')).toHaveCount(5);
 	await expect(page.getByText(/Trellune never posts the prompt/)).toBeVisible();
 });
+
+test('keeps the conversation bridge inside the viewport at 400% text size', async ({ page }) => {
+	await page.getByLabel('呼ばれたい名前').fill('Zoom learner');
+	await page.getByRole('button', { name: /ベースラインへ/ }).click();
+	await page.getByRole('button', { name: /Day 1を始める/ }).click();
+	await page.setViewportSize({ width: 1280, height: 900 });
+	await page.goto('/voice');
+	await page.evaluate(() => {
+		document.documentElement.style.fontSize = '400%';
+	});
+
+	await expect(page.getByRole('heading', { name: '手動の会話フロー' })).toBeVisible();
+	await expect
+		.poll(() =>
+			page.evaluate(() => ({
+				clientWidth: document.documentElement.clientWidth,
+				scrollWidth: document.documentElement.scrollWidth,
+			})),
+		)
+		.toEqual({ clientWidth: 1280, scrollWidth: 1280 });
+});
