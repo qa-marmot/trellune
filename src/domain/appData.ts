@@ -59,6 +59,8 @@ export interface AppData {
 	completedStudyDates: string[];
 	previewedDays: number[];
 	reviewCount: number;
+	reviewBatchTotal: number;
+	reviewBatchCompleted: number;
 	reviewCards: ReviewCardItem[];
 	learningItems: LearningItemView[];
 	remainingAcquisition: { words: number; phrases: number; previewGrammar: number };
@@ -93,6 +95,8 @@ export const DEFAULT_DATA: AppData = {
 	completedStudyDates: [],
 	previewedDays: [],
 	reviewCount: 0,
+	reviewBatchTotal: 0,
+	reviewBatchCompleted: 0,
 	reviewCards: [],
 	learningItems: [],
 	remainingAcquisition: { words: 8, phrases: 3, previewGrammar: 1 },
@@ -193,6 +197,8 @@ export function sanitizeLegacyData(data: z.infer<typeof LegacyAppDataSchema>): A
 		completedStudyDates: [],
 		previewedDays: Array.from(new Set(data.previewedDays)).sort((a, b) => a - b),
 		reviewCount: data.reviewCount,
+		reviewBatchTotal: data.reviewCount,
+		reviewBatchCompleted: 0,
 		reviewCards: [],
 		learningItems: [],
 		remainingAcquisition: { words: 8, phrases: 3, previewGrammar: 1 },

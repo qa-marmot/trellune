@@ -52,6 +52,32 @@ test('reveals authored reading evidence and keeps the first response for retry c
 	await expect(page.getByText('最初の回答と修正版を比較').first()).toBeVisible();
 });
 
+test('restores a language-scoped local practice draft and clears it explicitly', async ({
+	page,
+}) => {
+	await page.goto('/grammar');
+	await page.locator('.practice-card input').fill(CURRICULUM[0].grammar.expectedAnswer);
+	await page.getByRole('button', { name: '答えを確認' }).click();
+	const firstResponse = page.locator('[data-practice-response]').first();
+	await firstResponse.fill('This local draft should survive an ordinary reload.');
+	await page.waitForTimeout(650);
+
+	await page.reload();
+	await page.locator('.practice-card input').fill(CURRICULUM[0].grammar.expectedAnswer);
+	await page.getByRole('button', { name: '答えを確認' }).click();
+	await expect(page.getByText('端末内の下書きを復元しました。')).toBeVisible();
+	await expect(page.locator('[data-practice-response]').first()).toHaveValue(
+		'This local draft should survive an ordinary reload.',
+	);
+
+	await page.getByRole('button', { name: '端末内の下書きを破棄' }).click();
+	await expect(page.locator('[data-practice-response]').first()).toHaveValue('');
+	await page.reload();
+	await page.locator('.practice-card input').fill(CURRICULUM[0].grammar.expectedAnswer);
+	await page.getByRole('button', { name: '答えを確認' }).click();
+	await expect(page.locator('[data-practice-response]').first()).toHaveValue('');
+});
+
 test('shows the Day 90 reading-writing checkpoint without horizontal overflow', async ({
 	page,
 }) => {

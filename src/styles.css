@@ -550,6 +550,9 @@ input[type='range'] {
 .today-meta svg {
 	width: 1.2rem;
 }
+.today-workload-note {
+	max-width: 62ch;
+}
 .today-next-action {
 	justify-self: start;
 	margin-block-start: var(--space-xs);
@@ -943,6 +946,18 @@ input[type='range'] {
 .practice-step-label {
 	padding: var(--space-md) var(--space-xs) 0;
 }
+.draft-status {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--space-sm);
+	padding: 0 var(--space-xs);
+}
+.draft-status p {
+	margin: 0;
+	color: var(--color-muted);
+}
 .practice-meta {
 	color: var(--color-muted);
 	font-family: var(--font-label);
@@ -1094,6 +1109,25 @@ input[type='range'] {
 	margin-inline: auto;
 	display: grid;
 	gap: var(--space-lg);
+}
+.recovery-status {
+	display: grid;
+	gap: var(--space-sm);
+	padding: var(--space-lg);
+	border: var(--rule-hair) solid var(--color-rule);
+	border-radius: var(--radius-card);
+	background: var(--color-lavender-soft);
+}
+.recovery-status p,
+.recovery-status strong {
+	margin: 0;
+}
+.recovery-status progress {
+	width: 100%;
+	accent-color: var(--color-coral);
+}
+.recovery-status .button {
+	justify-self: start;
 }
 .review-card {
 	min-height: 22rem;
@@ -1247,6 +1281,31 @@ input[type='range'] {
 	padding: var(--space-lg);
 	border-radius: var(--radius-card);
 	background: var(--color-paper-3);
+}
+.bridge-steps {
+	display: grid;
+	gap: var(--space-sm);
+	padding: var(--space-md);
+	border: var(--rule-hair) solid var(--color-rule);
+	border-radius: var(--radius-sm);
+	background: var(--color-paper);
+}
+.bridge-steps h2,
+.bridge-steps p,
+.bridge-steps ol {
+	margin: 0;
+}
+.bridge-steps ol {
+	display: grid;
+	gap: var(--space-xs);
+	padding-inline-start: 1.5rem;
+}
+.bridge-steps li.is-complete {
+	font-weight: 800;
+	color: var(--color-success);
+}
+.bridge-steps .button {
+	justify-self: start;
 }
 .prompt-panel__head {
 	min-width: 0;

@@ -30,6 +30,8 @@ export interface ConversationProviderPreset {
 	readonly capabilities: ConversationCapabilities;
 	readonly setupNoteJa: string;
 	readonly setupNoteEn: string;
+	/** Official provider landing page. The prompt is never appended or auto-posted. */
+	readonly officialUrl?: string;
 }
 
 const tested = 'tested' as const;
@@ -56,6 +58,7 @@ export const CONVERSATION_PROVIDER_PRESETS: readonly ConversationProviderPreset[
 		},
 		setupNoteJa: 'プロンプトをテキストで送信して内容を確認してから、Voiceを開始してください。',
 		setupNoteEn: 'Send the prompt as text and review the request before starting Voice.',
+		officialUrl: 'https://chatgpt.com/',
 	},
 	{
 		id: 'claude',
@@ -74,6 +77,7 @@ export const CONVERSATION_PROVIDER_PRESETS: readonly ConversationProviderPreset[
 			'通常のテキスト会話へプロンプトを貼り付けます。音声やJSONの利用可否は利用中の環境で確認してください。',
 		setupNoteEn:
 			'Paste the prompt into a normal text conversation. Confirm voice and JSON support in your current environment.',
+		officialUrl: 'https://claude.ai/new',
 	},
 	{
 		id: 'gemini',
@@ -92,6 +96,7 @@ export const CONVERSATION_PROVIDER_PRESETS: readonly ConversationProviderPreset[
 			'通常のテキスト会話へプロンプトを貼り付けます。音声やJSONの利用可否は利用中の環境で確認してください。',
 		setupNoteEn:
 			'Paste the prompt into a normal text conversation. Confirm voice and JSON support in your current environment.',
+		officialUrl: 'https://gemini.google.com/app',
 	},
 	{
 		id: 'generic',

@@ -46,6 +46,8 @@ import {
 	type ConversationProviderId,
 } from './agents/contract';
 import { recommendBoost } from './domain/recommendations';
+import { reviewRecoveryState } from './domain/reviewRecovery';
+import { studyWorkload } from './domain/workload';
 import { buildPracticeFeedbackPrompt } from './domain/practiceFeedback';
 import {
 	FOUNDATION_STAGE_ASSESSMENT,
@@ -74,6 +76,13 @@ import {
 import { type AppData, useAppState } from './state/AppState';
 import { localizeUiMessage, useLearningSupport, useLocale } from './i18n';
 import { usePwaUpdate, type PwaUpdateStatus } from './pwa/update';
+import {
+	clearPracticeDraft,
+	cleanupPracticeDrafts,
+	loadPracticeDraft,
+	savePracticeDraft,
+	type PracticeDraftIdentity,
+} from './storage/localDrafts';
 
 type CoreDisplayStep = keyof AppData['core'];
 
@@ -84,7 +93,7 @@ function minuteRange([start, end]: readonly [number, number]): string {
 const OnboardingSetupSchema = z
 	.object({
 		learnerName: z.string().trim().min(1, '呼ばれたい名前を入力してください。').max(200),
-		dailyMinutes: z.number().int().min(10).max(30),
+		dailyMinutes: z.number().int().min(10).max(75),
 		timeZone: IanaTimeZoneSchema,
 		startDate: z.iso.date(),
 	})
@@ -244,7 +253,7 @@ function Onboarding() {
 				</label>
 				<fieldset className="choice-group">
 					<legend>{t('onboarding.minutes')}</legend>
-					{[10, 20, 30].map((value) => (
+					{[10, 20, 30, 45, 60, 75].map((value) => (
 						<label key={value} className={minutes === value ? 'choice is-selected' : 'choice'}>
 							<input
 								type="radio"
@@ -257,6 +266,7 @@ function Onboarding() {
 						</label>
 					))}
 				</fieldset>
+				<p className="form-note">{t('onboarding.budgetHelp')}</p>
 				<label className="field">
 					<span>{t('onboarding.timezone')}</span>
 					<input
@@ -899,6 +909,14 @@ function Today() {
 	const completed = Object.values(data.core).filter(Boolean).length;
 	const percent = Math.round((completed / 3) * 100);
 	const nextCoreStep = coreSteps.find((step) => !data.core[step.key]);
+	const workload = currentStage ? studyWorkload(currentStage, data.dailyMinutes) : null;
+	const minimumCoreRange = workload
+		? minuteRange(workload.minimumCoreMinutes)
+		: String(data.dailyMinutes);
+	const recommendedRange = workload
+		? minuteRange(workload.recommendedMinutes)
+		: String(data.dailyMinutes);
+	const preferredBudgetIsShort = workload?.preferredBudgetIsShort ?? false;
 	if (data.studyStatus === 'before-start') {
 		return (
 			<AppShell>
@@ -939,14 +957,15 @@ function Today() {
 					<div className="today-meta">
 						<span>
 							<Icon name="clock" />
-							{currentStage && currentStage.startDay > 90
-								? locale === 'ja'
-									? `Core ${minuteRange(currentStage.timeGuidance.minimumCoreMinutes)}分 · 推奨 ${minuteRange(currentStage.timeGuidance.recommendedMinutes)}分`
-									: `Core ${minuteRange(currentStage.timeGuidance.minimumCoreMinutes)} min · Recommended ${minuteRange(currentStage.timeGuidance.recommendedMinutes)} min`
-								: t('today.minutes', { count: data.dailyMinutes })}
+							{t('today.preferredBudget', { count: data.dailyMinutes })}
 						</span>
+						<span>{t('today.coreRange', { range: minimumCoreRange })}</span>
+						<span>{t('today.recommendedRange', { range: recommendedRange })}</span>
 						<span>{t('today.streak', { count: data.streak })}</span>
 					</div>
+					{preferredBudgetIsShort ? (
+						<p className="feedback today-workload-note">{t('today.budgetWarning')}</p>
+					) : null}
 					{nextCoreStep ? (
 						<button
 							className="button button--primary today-next-action"
@@ -1299,8 +1318,66 @@ function Grammar() {
 	);
 	const [practiceChecks, setPracticeChecks] = useState<Record<string, readonly string[]>>({});
 	const [practiceCopyId, setPracticeCopyId] = useState<string | null>(null);
+	const [draftRestored, setDraftRestored] = useState(false);
+	const draftSaveSkipRef = useRef(true);
 	const [saving, setSaving] = useState(false);
 	const [saveResult, setSaveResult] = useState<{ ok: boolean; message: string } | null>(null);
+	const draftLearnerKey = `${data.learnerName}\u0000${data.startDate ?? ''}\u0000${data.timeZone}`;
+	const draftIdentities = useMemo(() => {
+		const identities: Record<string, PracticeDraftIdentity> = {};
+		for (const block of practiceBlocks) {
+			for (const prompt of block.prompts) {
+				identities[prompt.id] = {
+					learnerKey: draftLearnerKey,
+					curriculumDay: day.day,
+					promptId: prompt.id,
+					supportLanguage: locale,
+				};
+			}
+		}
+		return identities;
+	}, [day.day, draftLearnerKey, locale, practiceBlocks]);
+	useEffect(() => {
+		cleanupPracticeDrafts(window.localStorage);
+		const restored: Record<string, string> = {};
+		for (const [promptId, identity] of Object.entries(draftIdentities)) {
+			const text = loadPracticeDraft(window.localStorage, identity);
+			if (text) restored[promptId] = text;
+		}
+		draftSaveSkipRef.current = true;
+		setPracticeResponses(restored);
+		setDraftRestored(Object.keys(restored).length > 0);
+		setPracticeInitialResponses({});
+		setPracticeFeedbackRevealed({});
+		setPracticeChecks({});
+	}, [draftIdentities]);
+	useEffect(() => {
+		if (draftSaveSkipRef.current) {
+			draftSaveSkipRef.current = false;
+			return;
+		}
+		const timer = window.setTimeout(() => {
+			for (const [promptId, identity] of Object.entries(draftIdentities)) {
+				savePracticeDraft(window.localStorage, identity, practiceResponses[promptId] ?? '');
+			}
+		}, 500);
+		return () => window.clearTimeout(timer);
+	}, [draftIdentities, practiceResponses]);
+	const clearStoredPracticeDrafts = () => {
+		for (const identity of Object.values(draftIdentities)) {
+			clearPracticeDraft(window.localStorage, identity);
+		}
+	};
+	const discardPracticeDrafts = () => {
+		clearStoredPracticeDrafts();
+		draftSaveSkipRef.current = true;
+		setPracticeResponses({});
+		setPracticeInitialResponses({});
+		setPracticeFeedbackRevealed({});
+		setPracticeChecks({});
+		setDraftRestored(false);
+		setPracticeAttempted(false);
+	};
 	const normalizeAnswer = (value: string) =>
 		value.normalize('NFKC').trim().toLocaleLowerCase('en-US').replace(/\s+/gu, ' ');
 	const correct = normalizeAnswer(answer) === normalizeAnswer(day.grammar.expectedAnswer);
@@ -1324,8 +1401,8 @@ function Grammar() {
 				: practiceBlocks.length > 0 && !practiceInputsReady
 					? practiceAttempted
 						? locale === 'ja'
-							? '未入力の欄、または語数を確認してください。練習文は端末へ保存されません。'
-							: 'Complete each response and check the word count. Practice responses are not saved on this device.'
+							? '未入力の欄、または語数を確認してください。下書きはこのブラウザだけに一時保存されます。'
+							: 'Complete each response and check the word count. Drafts are saved temporarily in this browser only.'
 						: locale === 'ja'
 							? '各課題へ英語で答え、語数を確認してから完了します。'
 							: 'Answer each task in English and check the word count before continuing.'
@@ -1372,7 +1449,13 @@ function Grammar() {
 						}
 						setSaving(true);
 						try {
-							setSaveResult(await completeStep('grammar'));
+							const result = await completeStep('grammar');
+							setSaveResult(result);
+							if (result.ok) {
+								clearStoredPracticeDrafts();
+								draftSaveSkipRef.current = true;
+								setDraftRestored(false);
+							}
 						} finally {
 							setSaving(false);
 						}
@@ -1406,6 +1489,16 @@ function Grammar() {
 					{checked && correct && practiceVisible && practiceBlocks.length > 0 ? (
 						<div className="practice-block-list practice-block-list--form">
 							<p className="eyebrow practice-step-label">Step 2 / 3 · Produce & transfer</p>
+							<div className="draft-status" role="status">
+								<p>{draftRestored ? t('grammar.draftRestored') : t('grammar.draftLocal')}</p>
+								<button
+									className="button button--compact"
+									type="button"
+									onClick={discardPracticeDrafts}
+								>
+									{t('grammar.discardDraft')}
+								</button>
+							</div>
 							{practiceBlocks.map((block) => {
 								const words = practiceBlockWordCount(block, practiceResponses);
 								const invalid =
@@ -1709,7 +1802,9 @@ function Library({ kind }: { kind: 'vocabulary' | 'phrases' }) {
 function Reviews() {
 	const { data, completeStep, gradeReview } = useAppState();
 	const { locale, t } = useLocale();
+	const navigate = useNavigate();
 	const card = data.reviewCards[0];
+	const recovery = reviewRecoveryState(data.reviewBatchTotal, data.reviewBatchCompleted);
 	const [revealed, setRevealed] = useState(false);
 	useEffect(() => {
 		if (data.reviewCards.length === 0 && !data.core.reviews) void completeStep('reviews');
@@ -1732,6 +1827,26 @@ function Reviews() {
 				}
 			/>
 			<section className="review-workspace">
+				{recovery.active ? (
+					<div className="recovery-status" role="status">
+						<div>
+							<p className="eyebrow">{t('reviews.recoveryTitle')}</p>
+							<strong>
+								{t('reviews.recoveryProgress', {
+									completed: recovery.completed,
+									total: recovery.total,
+								})}
+							</strong>
+							<p>{t('reviews.recoveryRemaining', { remaining: recovery.remaining })}</p>
+						</div>
+						<progress value={recovery.completed} max={recovery.total}>
+							{recovery.completed}/{recovery.total}
+						</progress>
+						<button className="button" type="button" onClick={() => navigate('/today')}>
+							{t('reviews.pauseSafely')}
+						</button>
+					</div>
+				) : null}
 				{card ? (
 					<button
 						className={`review-card${revealed ? ' is-revealed' : ''}`}
@@ -1982,6 +2097,32 @@ function Voice() {
 								: 'Voice support for this preset is unverified. Without Voice, it does not substitute for Core practice that includes conversation and listening.'}
 						</p>
 					) : null}
+					<section className="bridge-steps" aria-labelledby="bridge-steps-title">
+						<h2 id="bridge-steps-title">{t('voice.workflowTitle')}</h2>
+						<ol>
+							<li className={copyStatus === 'copied' ? 'is-complete' : undefined}>
+								{t('voice.step.copy')}
+							</li>
+							<li>{t('voice.step.open')}</li>
+							<li>{t('voice.step.complete')}</li>
+							<li>{t('voice.step.return')}</li>
+							<li>{t('voice.step.review')}</li>
+						</ol>
+						{provider.officialUrl ? (
+							<a
+								className="button"
+								href={provider.officialUrl}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								{t('voice.openProvider', {
+									provider: locale === 'ja' ? provider.label : provider.labelEn,
+								})}
+							</a>
+						) : (
+							<p>{t('voice.genericProviderOpen')}</p>
+						)}
+					</section>
 					<div className="prompt-panel__head">
 						<div>
 							<span>{t('voice.copyOnly')}</span>
@@ -2920,7 +3061,7 @@ function Settings() {
 						onChange={(event) => void update({ dailyMinutes: Number(event.target.value) })}
 						aria-label={locale === 'ja' ? '1日の学習時間' : 'Daily study time'}
 					>
-						{[10, 20, 30, 45].map((value) => (
+						{[10, 20, 30, 45, 60, 75].map((value) => (
 							<option key={value} value={value}>
 								{locale === 'ja' ? `${value}分` : `${value} min`}
 							</option>
