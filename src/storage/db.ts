@@ -19,6 +19,7 @@ import {
 	studyStatus,
 	type StudyStatus,
 } from '../domain/calendar';
+import { CurriculumEntryDaySchema, type CurriculumEntryDay } from '../domain/startingPoint';
 import { acceptsCoreSession, deriveCoreState } from '../domain/core';
 import { StageAssessmentSchema, type StageAssessment } from '../domain/assessment';
 import { reconstructReviewHistory, scheduleReview, type ReviewGrade } from '../domain/srs';
@@ -96,6 +97,7 @@ export interface LearnerProfileRecord {
 	goal: string;
 	timeZone: string;
 	startDate: string;
+	entryDay: CurriculumEntryDay;
 	currentDay: number;
 	streak: number;
 	updatedAt: string;
@@ -240,7 +242,7 @@ export interface SyncStateRecord {
 	updatedAt: string;
 }
 
-const ProfileSchema = z
+const ProfileRecordSchema = z
 	.object({
 		id: z.literal('current'),
 		onboarded: z.boolean(),
@@ -248,11 +250,27 @@ const ProfileSchema = z
 		goal: z.string().max(500),
 		timeZone: IanaTimeZoneSchema,
 		startDate: z.iso.date(),
+		entryDay: CurriculumEntryDaySchema,
 		currentDay: z.number().int().min(1).max(SUPPORTED_CURRICULUM_DAY_MAX),
 		streak: z.number().int().nonnegative(),
 		updatedAt: z.string(),
 	})
-	.strict();
+	.strict()
+	.superRefine((value, context) => {
+		if (value.currentDay < value.entryDay) {
+			context.addIssue({
+				code: 'custom',
+				path: ['currentDay'],
+				message: 'Current Day cannot precede the learner entry Day.',
+			});
+		}
+	});
+
+const ProfileSchema = z.preprocess((value) => {
+	if (!value || typeof value !== 'object' || Array.isArray(value) || 'entryDay' in value)
+		return value;
+	return { ...value, entryDay: 1 };
+}, ProfileRecordSchema);
 
 const SettingsSchema = z
 	.object({
@@ -608,11 +626,12 @@ function progressForToday(
 } {
 	const studyDate = studyDateAt(now, profile.timeZone);
 	const existing = progress.find((item) => item.studyDate === studyDate);
-	const curriculumDay = existing?.curriculumDay ?? nextCurriculumDay(progress, activeTotalDays);
+	const curriculumDay =
+		existing?.curriculumDay ?? nextCurriculumDay(progress, activeTotalDays, profile.entryDay);
 	return {
 		studyDate,
 		curriculumDay,
-		status: studyStatus(profile.startDate, studyDate, progress, activeTotalDays),
+		status: studyStatus(profile.startDate, studyDate, progress, activeTotalDays, profile.entryDay),
 		record: existing ?? emptyProgress(studyDate, curriculumDay, now),
 	};
 }
@@ -772,6 +791,7 @@ async function replaceNormalizedData(data: AppData, migration: boolean): Promise
 				goal: data.goal,
 				timeZone: data.timeZone,
 				startDate,
+				entryDay: data.entryDay,
 				currentDay: data.currentDay,
 				streak: data.streak,
 				updatedAt: now,
@@ -960,6 +980,7 @@ function assertInvariant(condition: unknown, message: string): asserts condition
 
 function validateNormalizedInvariants(input: {
 	currentDay: number;
+	entryDay: CurriculumEntryDay;
 	activeTotalDays: number;
 	progress: DailyProgressRecord[];
 	learningEvents: LearningEventRecord[];
@@ -979,6 +1000,11 @@ function validateNormalizedInvariants(input: {
 			`${label} Day ${day} exceeds active Day ${input.activeTotalDays}.`,
 		);
 	assertActiveDay(input.currentDay, 'Profile');
+	assertActiveDay(input.entryDay, 'Profile entry');
+	assertInvariant(
+		input.currentDay >= input.entryDay,
+		'Profile current Day precedes its entry Day.',
+	);
 	const completedDays = new Set<number>();
 	for (const progress of input.progress) {
 		assertActiveDay(progress.curriculumDay, `Progress ${progress.id}`);
@@ -1163,6 +1189,7 @@ export async function loadAppData(): Promise<AppData> {
 		const activeTotalDays = activeCurriculumTotalDaysFromRecord(activeTotalDaysRecord);
 		validateNormalizedInvariants({
 			currentDay: profile.currentDay,
+			entryDay: profile.entryDay,
 			activeTotalDays,
 			progress,
 			learningEvents: safeLearningEvents,
@@ -1209,6 +1236,7 @@ export async function loadAppData(): Promise<AppData> {
 			dailyMinutes: settings.dailyMinutes,
 			timeZone: profile.timeZone,
 			startDate: profile.startDate,
+			entryDay: profile.entryDay,
 			studyStatus: current.status,
 			currentDay: current.curriculumDay,
 			streak: calculateStreak(completedDates, current.studyDate),
@@ -1321,6 +1349,7 @@ export async function applyAppPatch(patch: Partial<AppData>): Promise<void> {
 					goal: DEFAULT_DATA.goal,
 					timeZone: patch.timeZone ?? DEFAULT_DATA.timeZone,
 					startDate: studyDateAt(now, patch.timeZone ?? DEFAULT_DATA.timeZone),
+					entryDay: DEFAULT_DATA.entryDay,
 					currentDay: DEFAULT_DATA.currentDay,
 					streak: DEFAULT_DATA.streak,
 					updatedAt: now,
@@ -1339,6 +1368,7 @@ export async function applyAppPatch(patch: Partial<AppData>): Promise<void> {
 					goal: patch.goal ?? profile.goal,
 					timeZone: patch.timeZone ?? profile.timeZone,
 					startDate: patch.startDate ?? profile.startDate,
+					entryDay: patch.entryDay ?? profile.entryDay,
 					currentDay: patch.currentDay ?? profile.currentDay,
 					streak: patch.streak ?? profile.streak,
 					updatedAt: now,
@@ -1357,6 +1387,15 @@ export async function applyAppPatch(patch: Partial<AppData>): Promise<void> {
 					throw new PersistenceError(
 						'constraint',
 						`Day ${nextProfile.currentDay}は現在有効なDay ${activeTotalDays}を超えています。`,
+					);
+				}
+				if (
+					nextProfile.entryDay > activeTotalDays ||
+					nextProfile.currentDay < nextProfile.entryDay
+				) {
+					throw new PersistenceError(
+						'constraint',
+						`開始地点Day ${nextProfile.entryDay}は現在のカリキュラム範囲と一致しません。`,
 					);
 				}
 				if (patch.previewedDays?.some((day) => day > activeTotalDays)) {

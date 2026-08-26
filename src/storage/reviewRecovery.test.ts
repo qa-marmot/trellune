@@ -16,6 +16,7 @@ beforeEach(async () => {
 		goal: 'Resume a frozen review batch safely',
 		timeZone: 'Asia/Tokyo',
 		startDate: today,
+		entryDay: 1,
 		currentDay: 1,
 		streak: 0,
 		updatedAt: now,

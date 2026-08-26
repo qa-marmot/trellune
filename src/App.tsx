@@ -57,6 +57,11 @@ import {
 } from './domain/assessment';
 import { addStudyDays, studyDateAt } from './domain/calendar';
 import {
+	CURRICULUM_ENTRY_DAYS,
+	CurriculumEntryDaySchema,
+	type CurriculumEntryDay,
+} from './domain/startingPoint';
+import {
 	discardUnresolvableBlockedSync,
 	getSyncStatus,
 	resolveSyncConflict,
@@ -96,6 +101,7 @@ const OnboardingSetupSchema = z
 		dailyMinutes: z.number().int().min(10).max(75),
 		timeZone: IanaTimeZoneSchema,
 		startDate: z.iso.date(),
+		entryDay: CurriculumEntryDaySchema,
 	})
 	.strict();
 const coreSteps: Array<{
@@ -145,6 +151,7 @@ function Onboarding() {
 	const [startDate, setStartDate] = useState(() =>
 		data.startDate ? data.startDate : studyDateAt(new Date(), timeZone),
 	);
+	const [entryDay, setEntryDay] = useState<CurriculumEntryDay>(data.entryDay);
 	const [errors, setErrors] = useState<Record<string, string>>({});
 	return (
 		<main className="onboarding-shell">
@@ -202,6 +209,7 @@ function Onboarding() {
 						dailyMinutes: minutes,
 						timeZone,
 						startDate,
+						entryDay,
 					});
 					if (!parsed.success) {
 						const nextErrors: Record<string, string> = {};
@@ -226,7 +234,11 @@ function Onboarding() {
 						return;
 					}
 					setErrors({});
-					const result = await update({ onboarded: true, ...parsed.data });
+					const result = await update({
+						onboarded: true,
+						...parsed.data,
+						currentDay: parsed.data.entryDay,
+					});
 					if (result.ok) navigate('/baseline');
 				}}
 			>
@@ -267,6 +279,22 @@ function Onboarding() {
 					))}
 				</fieldset>
 				<p className="form-note">{t('onboarding.budgetHelp')}</p>
+				<fieldset className="choice-group choice-group--entry">
+					<legend>{t('onboarding.startingPoint')}</legend>
+					{CURRICULUM_ENTRY_DAYS.map((day) => (
+						<label key={day} className={entryDay === day ? 'choice is-selected' : 'choice'}>
+							<input
+								type="radio"
+								name="entryDay"
+								value={day}
+								checked={entryDay === day}
+								onChange={() => setEntryDay(day)}
+							/>
+							<span>Day {day}</span>
+						</label>
+					))}
+				</fieldset>
+				<p className="form-note">{t('onboarding.startingPointHelp')}</p>
 				<label className="field">
 					<span>{t('onboarding.timezone')}</span>
 					<input
@@ -334,7 +362,7 @@ function Onboarding() {
 
 function Baseline() {
 	const navigate = useNavigate();
-	const { recordBaseline, setEditorDirty } = useAppState();
+	const { data, recordBaseline, setEditorDirty } = useAppState();
 	const { formatNumber, locale, t } = useLocale();
 	const [source, setSource] = useState('');
 	const [result, setResult] = useState<ReturnType<typeof parseBaselineAssessment> | null>(null);
@@ -367,8 +395,8 @@ function Baseline() {
 				title={locale === 'ja' ? '話し始める前の記録' : 'A record before you begin speaking'}
 				description={
 					locale === 'ja'
-						? '今の自分を測るだけ。点数でコースを短くしたり長くしたりはしません。'
-						: 'This simply records where you are now. Scores never make the course shorter or longer.'
+						? `今の自分を記録します。開始地点Day ${data.entryDay}は設定時の自己選択で、ベースラインは公式なレベル判定ではありません。`
+						: `This records where you are now. Day ${data.entryDay} is your self-selected starting point; the baseline is not a certified placement test.`
 				}
 			/>
 			<section className="split-panel">
@@ -467,13 +495,17 @@ function Baseline() {
 									type="button"
 									onClick={() => void save()}
 								>
-									{locale === 'ja' ? '評価を保存してDay 1へ' : 'Save assessment and go to Day 1'}
+									{locale === 'ja'
+										? `評価を保存してDay ${data.entryDay}へ`
+										: `Save assessment and go to Day ${data.entryDay}`}
 								</button>
 							</div>
 						) : null}
 					</div>
 					<button className="button" type="button" onClick={() => navigate('/today')}>
-						{locale === 'ja' ? 'Day 1を始める（今回はスキップ）' : 'Start Day 1 (skip for now)'}
+						{locale === 'ja'
+							? `Day ${data.entryDay}を始める（今回はスキップ）`
+							: `Start Day ${data.entryDay} (skip for now)`}
 					</button>
 					{message ? (
 						<p
@@ -924,6 +956,7 @@ function Today() {
 					title={t('today.beforeStart')}
 					description={t('today.beforeStartDescription', {
 						date: data.startDate ?? t('settings.title'),
+						day: data.entryDay,
 					})}
 				/>
 			</AppShell>
@@ -1124,19 +1157,23 @@ function Curriculum() {
 									.map((day) => {
 										const statusKey = data.completedDays.includes(day.day)
 											? 'complete'
-											: day.day === data.currentDay
-												? 'today'
-												: data.previewedDays.includes(day.day)
-													? 'previewed'
-													: 'not-started';
+											: day.day < data.entryDay
+												? 'earlier'
+												: day.day === data.currentDay
+													? 'today'
+													: data.previewedDays.includes(day.day)
+														? 'previewed'
+														: 'not-started';
 										const status =
 											statusKey === 'complete'
 												? t('curriculum.completed')
-												: statusKey === 'today'
-													? t('curriculum.today')
-													: statusKey === 'previewed'
-														? t('curriculum.previewed')
-														: t('curriculum.notStarted');
+												: statusKey === 'earlier'
+													? t('curriculum.earlier')
+													: statusKey === 'today'
+														? t('curriculum.today')
+														: statusKey === 'previewed'
+															? t('curriculum.previewed')
+															: t('curriculum.notStarted');
 										return (
 											<button
 												key={day.day}

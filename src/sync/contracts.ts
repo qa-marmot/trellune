@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { SUPPORTED_CURRICULUM_DAY_MAX } from '../curriculum/constants';
 import { StageAssessmentSchema } from '../domain/assessment';
+import { CurriculumEntryDaySchema } from '../domain/startingPoint';
 import {
 	BaselineAssessmentSchema,
 	ExternalSessionJsonSchema,
@@ -38,11 +39,21 @@ export const ProfileSettingsPayloadSchema = z
 				goal: z.string().max(500),
 				timeZone: IanaTimeZoneSchema,
 				startDate: StudyDateSchema,
+				entryDay: CurriculumEntryDaySchema.optional().default(1),
 				currentDay: z.number().int().min(1).max(SUPPORTED_CURRICULUM_DAY_MAX),
 				streak: z.number().int().nonnegative().max(10_000),
 				updatedAt: TimestampSchema,
 			})
-			.strict(),
+			.strict()
+			.superRefine((value, context) => {
+				if (value.currentDay < value.entryDay) {
+					context.addIssue({
+						code: 'custom',
+						path: ['currentDay'],
+						message: 'Current Day cannot precede the learner entry Day.',
+					});
+				}
+			}),
 		settings: z
 			.object({
 				id: z.literal('current'),

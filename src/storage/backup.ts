@@ -4,6 +4,7 @@ import { SUPPORTED_CURRICULUM_DAY_MAX } from '../curriculum/constants';
 import { LegacyAppDataSchema, sanitizeLegacyData } from '../domain/appData';
 import { StageAssessmentSchema } from '../domain/assessment';
 import { addStudyDays, studyDateAt } from '../domain/calendar';
+import { CurriculumEntryDaySchema } from '../domain/startingPoint';
 import { reconstructReviewHistory } from '../domain/srs';
 import { parseStrictJson } from '../lib/strictJson';
 import {
@@ -51,6 +52,7 @@ const LearnerProfileSchema = z
 		goal: z.string().max(500),
 		timeZone: IanaTimeZoneSchema,
 		startDate: z.iso.date(),
+		entryDay: CurriculumEntryDaySchema.optional().default(1),
 		currentDay: z.number().int().min(1).max(SUPPORTED_CURRICULUM_DAY_MAX),
 		streak: z.number().int().nonnegative().max(10_000),
 		updatedAt: TimestampSchema,
@@ -410,6 +412,7 @@ export class BackupValidationError extends Error {
 function assertBackupWithinActiveCurriculum(data: BackupData, activeTotalDays: number): void {
 	const days: Array<{ day: number; label: string }> = [
 		{ day: data.profile.currentDay, label: 'プロフィール' },
+		{ day: data.profile.entryDay, label: '開始地点' },
 		...data.dailyProgress.map((item) => ({
 			day: item.curriculumDay,
 			label: `日次進捗「${item.id}」`,
@@ -427,6 +430,11 @@ function assertBackupWithinActiveCurriculum(data: BackupData, activeTotalDays: n
 			label: `文法進捗「${item.id}」`,
 		})),
 	];
+	if (data.profile.currentDay < data.profile.entryDay) {
+		throw new BackupValidationError(
+			`プロフィールのDay ${data.profile.currentDay}は開始地点Day ${data.profile.entryDay}より前です。端末内データは変更していません。`,
+		);
+	}
 	for (const session of data.sessions) {
 		if (!session.payload) continue;
 		days.push({
@@ -817,6 +825,7 @@ async function legacyEnvelope(value: unknown): Promise<BackupEnvelope | null> {
 			goal: legacy.goal,
 			timeZone,
 			startDate,
+			entryDay: 1,
 			currentDay: legacy.currentDay,
 			streak: legacy.streak,
 			updatedAt: now,
@@ -907,6 +916,17 @@ export async function previewBackupText(source: string): Promise<BackupPreview> 
 			`Trellune v2または完全な旧v1バックアップ形式ではありません: ${result.success ? '形式エラー' : (result.error.issues[0]?.message ?? '形式エラー')}`,
 		);
 	}
+	// Verify a v2 envelope against exactly the data its writer hashed. Schema defaults are
+	// applied only after this check so a pre-entryDay v2 backup remains authentic and readable.
+	const integrityData =
+		result.success && parsed && typeof parsed === 'object' && 'data' in parsed
+			? (parsed as { data: unknown }).data
+			: envelope.data;
+	if ((await sha256(integrityData)) !== envelope.integrity.sha256) {
+		throw new BackupValidationError(
+			'バックアップのSHA-256が一致しません。改ざんまたは破損の可能性があります。',
+		);
+	}
 	assertBackupWithinActiveCurriculum(envelope.data, await effectiveActiveCurriculumTotalDays());
 	await validateSemantics(envelope.data);
 	const actualCounts = countsFor(envelope.data);
@@ -915,11 +935,6 @@ export async function previewBackupText(source: string): Promise<BackupPreview> 
 		envelope.integrity.totalRecords !== totalCounts(actualCounts)
 	) {
 		throw new BackupValidationError('バックアップの件数情報が内容と一致しません。');
-	}
-	if ((await sha256(envelope.data)) !== envelope.integrity.sha256) {
-		throw new BackupValidationError(
-			'バックアップのSHA-256が一致しません。改ざんまたは破損の可能性があります。',
-		);
 	}
 	const current = await readBackupData();
 	return {

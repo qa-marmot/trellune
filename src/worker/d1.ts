@@ -1619,10 +1619,13 @@ export class EnglishOsRepository {
 						mutation.baseVersion,
 					),
 				this.database
-					.prepare('UPDATE learners SET timezone = ?, start_date = ?, updated_at = ? WHERE id = ?')
+					.prepare(
+						'UPDATE learners SET timezone = ?, start_date = ?, entry_day = ?, updated_at = ? WHERE id = ?',
+					)
 					.bind(
 						mutation.payload.profile.timeZone,
 						mutation.payload.profile.startDate,
+						mutation.payload.profile.entryDay,
 						now,
 						learnerId,
 					),
@@ -2600,10 +2603,11 @@ export class EnglishOsRepository {
 			return today.curriculum_day;
 		}
 		const learner = await this.database
-			.prepare('SELECT start_date FROM learners WHERE id = ?')
+			.prepare('SELECT start_date, entry_day FROM learners WHERE id = ?')
 			.bind(learnerId)
-			.first<{ start_date: string | null }>();
+			.first<{ start_date: string | null; entry_day: number | null }>();
 		const startDate = learner?.start_date ?? studyDate;
+		const entryDay = learner?.entry_day ?? 1;
 		if (studyDate < startDate) throw new CurriculumInactiveError('before-start', startDate);
 		const result = await this.database
 			.prepare(
@@ -2621,14 +2625,17 @@ export class EnglishOsRepository {
 				rows
 					.filter(
 						(row) =>
-							row.coreCompleted && row.curriculumDay >= 1 && row.curriculumDay <= activeTotalDays,
+							row.coreCompleted &&
+							row.curriculumDay >= entryDay &&
+							row.curriculumDay <= activeTotalDays,
 					)
 					.map((row) => row.curriculumDay),
-			).size === activeTotalDays
+			).size ===
+			activeTotalDays - entryDay + 1
 		) {
 			throw new CurriculumInactiveError('graduated', startDate, activeTotalDays);
 		}
-		return nextCurriculumDay(rows, activeTotalDays);
+		return nextCurriculumDay(rows, activeTotalDays, entryDay);
 	}
 
 	private async activeCurriculumTotalDays(): Promise<number> {
