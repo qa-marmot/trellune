@@ -135,8 +135,9 @@ try {
 	let page = await context.newPage();
 	await page.goto('/onboarding');
 	await page.getByLabel('呼ばれたい名前').fill('PWA Update Learner');
+	await page.getByLabel('Day 181').check();
 	await page.getByRole('button', { name: /ベースラインへ/ }).click();
-	await page.getByRole('button', { name: /Day 1を始める/ }).click();
+	await page.getByRole('button', { name: /Day 181を始める/ }).click();
 	await page.evaluate(async () => navigator.serviceWorker.ready);
 	if (!(await page.evaluate(() => Boolean(navigator.serviceWorker.controller))))
 		await page.reload();
@@ -147,6 +148,7 @@ try {
 	);
 	await setActiveCurriculumTotalDays(page, 270);
 	const preservedBeforeUpdate = await readPreservedState(page);
+	assert.equal(preservedBeforeUpdate.profile?.entryDay, 181);
 	// Simulate a v1.7 learner: it has durable learner data but no UI-locale key.
 	await page.evaluate(() => globalThis.localStorage.removeItem('trellune.uiLocale.v1'));
 

@@ -46,7 +46,17 @@ const mutation = {
 
 describe('sync contracts', () => {
 	it('accepts the only generic mutation: profile and settings', () => {
-		expect(SyncMutationSchema.safeParse(mutation).success).toBe(true);
+		const legacy = SyncMutationSchema.parse(mutation);
+		expect(legacy.payload.profile.entryDay).toBe(1);
+		expect(
+			SyncMutationSchema.safeParse({
+				...mutation,
+				payload: {
+					...mutation.payload,
+					profile: { ...mutation.payload.profile, entryDay: 181, currentDay: 181 },
+				},
+			}).success,
+		).toBe(true);
 		expect(
 			SyncMutationSchema.safeParse({
 				...mutation,

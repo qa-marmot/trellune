@@ -37,6 +37,7 @@ beforeEach(async () => {
 		goal: 'Keep local data safe',
 		timeZone: 'Asia/Tokyo',
 		startDate: '2026-08-12',
+		entryDay: 1,
 		currentDay: 2,
 		streak: 1,
 		updatedAt: now,
@@ -59,6 +60,31 @@ afterEach(async () => {
 });
 
 describe('backup v2 curriculum compatibility', () => {
+	it('restores a pre-entryDay backup v2 as a Day 1 learner', async () => {
+		const envelope = JSON.parse(await createBackupText()) as {
+			integrity: { sha256: string };
+			data: { profile: Record<string, unknown> };
+		};
+		delete envelope.data.profile.entryDay;
+		envelope.integrity.sha256 = await integrityHash(envelope.data);
+
+		const preview = await previewBackupText(JSON.stringify(envelope));
+		expect(preview.envelope.data.profile.entryDay).toBe(1);
+	});
+
+	it('round-trips an experienced learner entry without synthetic history', async () => {
+		await db.learnerProfiles.update('current', { entryDay: 271, currentDay: 271 });
+		const source = await createBackupText();
+		const preview = await previewBackupText(source);
+		expect(preview.envelope.data.profile).toMatchObject({ entryDay: 271, currentDay: 271 });
+		expect(preview.envelope.data.dailyProgress).toEqual([]);
+		await applyBackupPreview(preview);
+		await expect(db.learnerProfiles.get('current')).resolves.toMatchObject({
+			entryDay: 271,
+			currentDay: 271,
+		});
+	});
+
 	it('losslessly exports repeated attempts for one curriculum day from production-shaped v1.2 data', async () => {
 		const attempts = [
 			{

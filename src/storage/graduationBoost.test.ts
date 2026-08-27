@@ -16,6 +16,7 @@ beforeEach(async () => {
 		goal: 'Keep practicing after Day 365',
 		timeZone: 'Asia/Tokyo',
 		startDate: addStudyDays(today, -364),
+		entryDay: 1,
 		currentDay: 365,
 		streak: 365,
 		updatedAt: now,

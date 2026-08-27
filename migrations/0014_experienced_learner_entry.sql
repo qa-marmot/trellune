@@ -1,0 +1,3 @@
+ALTER TABLE learners
+ADD COLUMN entry_day INTEGER NOT NULL DEFAULT 1
+CHECK (entry_day IN (1, 91, 181, 271));

@@ -16,8 +16,8 @@ const migrationFiles = readdirSync(join(root, 'migrations'), { withFileTypes: tr
 assert.equal(migrationFiles[0], '0001_initial.sql', 'the migration chain must start at 0001');
 assert.equal(
 	migrationFiles.at(-1),
-	'0013_language_neutral_session_support.sql',
-	'the migration chain must end at language-neutral session support',
+	'0014_experienced_learner_entry.sql',
+	'the migration chain must end at experienced learner entry support',
 );
 const stageAssessmentMigrationSql = readFileSync(
 	join(root, 'migrations', '0009_stage_assessments.sql'),
@@ -1947,10 +1947,11 @@ async function verifyLegacyMigration() {
 	const fluencyActivationMigration = '0011_activate_fluency_curriculum.sql';
 	const b2ChallengeActivationMigration = '0012_activate_b2_challenge_curriculum.sql';
 	const languageNeutralSessionMigration = '0013_language_neutral_session_support.sql';
+	const experiencedLearnerEntryMigration = '0014_experienced_learner_entry.sql';
 	const insertGuardIndex = laterMigrations.indexOf(insertGuardMigration);
 	assert.ok(insertGuardIndex >= 0);
 	assert.ok(laterMigrations.includes(b2ChallengeActivationMigration));
-	assert.equal(laterMigrations.at(-1), languageNeutralSessionMigration);
+	assert.equal(laterMigrations.at(-1), experiencedLearnerEntryMigration);
 	for (const migration of laterMigrations.slice(0, insertGuardIndex)) {
 		executeFile(legacyPersistence, join(root, 'migrations', migration));
 	}
@@ -2084,6 +2085,33 @@ async function verifyLegacyMigration() {
 		),
 		legacySessionSupportBeforeNeutralMigration,
 		'0013 must preserve every legacy Japanese session value',
+	);
+	const learnersBeforeEntryMigration = queryRows(
+		legacyPersistence,
+		`SELECT id FROM learners ORDER BY id`,
+	);
+	executeFile(legacyPersistence, join(root, 'migrations', experiencedLearnerEntryMigration));
+	assert.deepEqual(
+		queryRows(legacyPersistence, `SELECT id, entry_day FROM learners ORDER BY id`).map((row) => ({
+			id: row.id,
+			entry_day: Number(row.entry_day),
+		})),
+		learnersBeforeEntryMigration.map((row) => ({ id: row.id, entry_day: 1 })),
+		'0014 must preserve every existing learner and default them to Day 1',
+	);
+	executeSql(
+		legacyPersistence,
+		`UPDATE learners SET entry_day = 181 WHERE id = 'migration-repair-learner'`,
+	);
+	assert.equal(
+		Number(
+			queryRows(
+				legacyPersistence,
+				`SELECT entry_day FROM learners WHERE id = 'migration-repair-learner'`,
+			)[0].entry_day,
+		),
+		181,
+		'0014 must allow a defined Stage entry boundary',
 	);
 	assert.deepEqual(
 		queryRows(

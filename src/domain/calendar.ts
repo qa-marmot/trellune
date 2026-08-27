@@ -2,6 +2,7 @@ import {
 	AVAILABLE_CURRICULUM_TOTAL_DAYS,
 	SUPPORTED_CURRICULUM_DAY_MAX,
 } from '../curriculum/constants';
+import { CurriculumEntryDaySchema } from './startingPoint';
 
 const LocalDatePattern = /^(\d{4})-(\d{2})-(\d{2})$/u;
 
@@ -58,18 +59,26 @@ function assertValidCurriculumTotalDays(totalDays: number): void {
 	}
 }
 
+function assertValidEntryDay(entryDay: number, totalDays: number): void {
+	if (!CurriculumEntryDaySchema.safeParse(entryDay).success || entryDay > totalDays) {
+		throw new RangeError(`Curriculum entry day must be an available stage boundary.`);
+	}
+}
+
 export function nextCurriculumDay(
 	progress: readonly CurriculumProgressLike[],
 	totalDays = AVAILABLE_CURRICULUM_TOTAL_DAYS,
+	entryDay = 1,
 ): number {
 	assertValidCurriculumTotalDays(totalDays);
+	assertValidEntryDay(entryDay, totalDays);
 	const completed = new Set(
 		progress
 			.filter((item) => item.coreCompleted)
 			.map((item) => item.curriculumDay)
-			.filter((day) => day >= 1 && day <= totalDays),
+			.filter((day) => day >= entryDay && day <= totalDays),
 	);
-	for (let day = 1; day <= totalDays; day += 1) {
+	for (let day = entryDay; day <= totalDays; day += 1) {
 		if (!completed.has(day)) return day;
 	}
 	return totalDays;
@@ -80,8 +89,10 @@ export function studyStatus(
 	studyDate: string,
 	progress: readonly CurriculumProgressLike[],
 	totalDays = AVAILABLE_CURRICULUM_TOTAL_DAYS,
+	entryDay = 1,
 ): StudyStatus {
 	assertValidCurriculumTotalDays(totalDays);
+	assertValidEntryDay(entryDay, totalDays);
 	if (!LocalDatePattern.test(startDate) || !LocalDatePattern.test(studyDate)) {
 		throw new RangeError('Invalid local calendar date');
 	}
@@ -90,9 +101,9 @@ export function studyStatus(
 		progress
 			.filter((item) => item.coreCompleted)
 			.map((item) => item.curriculumDay)
-			.filter((day) => day >= 1 && day <= totalDays),
+			.filter((day) => day >= entryDay && day <= totalDays),
 	);
-	return completed.size === totalDays ? 'graduated' : 'active';
+	return completed.size === totalDays - entryDay + 1 ? 'graduated' : 'active';
 }
 
 export function calculateStreak(completedStudyDates: readonly string[], today: string): number {

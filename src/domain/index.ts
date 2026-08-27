@@ -1,5 +1,6 @@
 export * from './learning';
 export * from './recommendations';
+export * from './startingPoint';
 export {
 	BoostModeSchema,
 	ChatGptSessionSchema,

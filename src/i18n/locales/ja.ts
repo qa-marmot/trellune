@@ -49,9 +49,12 @@ export const ja: Record<TranslationKey, string> = {
 	'onboarding.minutes': '毎日の希望時間',
 	'onboarding.budgetHelp':
 		'これは希望する学習予算です。後半のCoreが必ずこの時間内に収まるという意味ではありません。Stageごとの実負荷は別に表示します。',
+	'onboarding.startingPoint': '学習を始めるStage',
+	'onboarding.startingPointHelp':
+		'Day 1 / 91 / 181 / 271から選べます。前のDayを完了扱いにはせず、復習・単語・セッション・連続記録も作りません。公式なレベル判定ではありません。',
 	'onboarding.timezone': '学習タイムゾーン（IANA）',
 	'onboarding.timezoneHelp': '日付境界と復習時刻の計算に使います。',
-	'onboarding.startDate': 'Day 1を始める日',
+	'onboarding.startDate': '選んだDayを始める日',
 	'onboarding.startDateHelp': '開始日前は学習記録を作りません。',
 	'onboarding.start': 'ベースラインへ',
 	'today.title': '今日の学習',
@@ -70,7 +73,7 @@ export const ja: Record<TranslationKey, string> = {
 	'today.boostDescription': '追加学習は任意です。しなくても失敗にはなりません。',
 	'today.chooseBoost': 'Boostを選ぶ',
 	'today.beforeStart': '開始日を待っています',
-	'today.beforeStartDescription': 'Day 1は{date}から始まります。設定画面で変更できます。',
+	'today.beforeStartDescription': 'Day {day}は{date}から始まります。設定画面で変更できます。',
 	'today.graduated': '{days}日間を修了しました',
 	'today.graduatedDescription':
 		'新しいCore日は作成しません。履歴・ライブラリ・分析は引き続き確認できます。',
@@ -90,6 +93,7 @@ export const ja: Record<TranslationKey, string> = {
 	'curriculum.completed': '完了',
 	'curriculum.today': '今日',
 	'curriculum.notStarted': '未着手',
+	'curriculum.earlier': '開始地点より前・未完了',
 	'curriculum.previewed': '予習済み',
 	'curriculum.vocabulary': '単語',
 	'curriculum.phrases': '定型表現',

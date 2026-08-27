@@ -29,6 +29,24 @@ describe('study calendar', () => {
 		expect(nextCurriculumDay([{ curriculumDay: 1, coreCompleted: false }])).toBe(1);
 	});
 
+	it.each([1, 91, 181, 271] as const)(
+		'uses Day %i as a starting boundary without treating earlier days as complete',
+		(entryDay) => {
+			expect(nextCurriculumDay([], 365, entryDay)).toBe(entryDay);
+			expect(studyStatus('2026-08-10', '2026-08-10', [], 365, entryDay)).toBe('active');
+			const completed = Array.from({ length: 365 - entryDay + 1 }, (_, index) => ({
+				curriculumDay: entryDay + index,
+				coreCompleted: true,
+			}));
+			expect(studyStatus('2026-08-10', '2026-08-10', completed, 365, entryDay)).toBe('graduated');
+		},
+	);
+
+	it('rejects a non-boundary or inactive starting day', () => {
+		expect(() => nextCurriculumDay([], 365, 90)).toThrow(RangeError);
+		expect(() => nextCurriculumDay([], 180, 271)).toThrow(RangeError);
+	});
+
 	it.each([
 		[0, 1],
 		[6, 7],

@@ -72,6 +72,7 @@ async function seedRestoredDevice(): Promise<void> {
 		goal: 'restore reconciliation test',
 		timeZone: 'Asia/Tokyo',
 		startDate: '2026-08-10',
+		entryDay: 1,
 		currentDay: 1,
 		streak: 0,
 		updatedAt: now,

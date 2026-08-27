@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { StageAssessment } from './assessment';
+import type { CurriculumEntryDay } from './startingPoint';
 
 export type CoreStep = 'reviews' | 'grammar';
 
@@ -51,6 +52,7 @@ export interface AppData {
 	dailyMinutes: number;
 	timeZone: string;
 	startDate: string | null;
+	entryDay: CurriculumEntryDay;
 	studyStatus: 'before-start' | 'active' | 'graduated';
 	currentDay: number;
 	streak: number;
@@ -87,6 +89,7 @@ export const DEFAULT_DATA: AppData = {
 	dailyMinutes: 20,
 	timeZone: 'Asia/Tokyo',
 	startDate: null,
+	entryDay: 1,
 	studyStatus: 'active',
 	currentDay: 1,
 	streak: 0,
@@ -189,6 +192,7 @@ export function sanitizeLegacyData(data: z.infer<typeof LegacyAppDataSchema>): A
 		dailyMinutes: data.dailyMinutes,
 		timeZone: 'Asia/Tokyo',
 		startDate: null,
+		entryDay: 1,
 		studyStatus: 'active',
 		currentDay: data.currentDay,
 		streak: data.streak,

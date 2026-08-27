@@ -16,6 +16,7 @@ beforeEach(async () => {
 		goal: 'Verify mistake-backed review cards',
 		timeZone: 'Asia/Tokyo',
 		startDate: today,
+		entryDay: 1,
 		currentDay: 1,
 		streak: 0,
 		updatedAt: now,

@@ -46,6 +46,7 @@ class FakeDatabase implements D1DatabaseLike {
 	currentSyncEntity: Record<string, unknown> | null = null;
 	progressRow: Record<string, unknown> | null = null;
 	authoritativeVersion: number | null = null;
+	learnerRow: { start_date: string | null; entry_day: number | null } | null = null;
 	activeTotalDays = 90;
 
 	prepare(query: string): D1PreparedStatement {
@@ -62,6 +63,7 @@ class FakeDatabase implements D1DatabaseLike {
 		if (sql.includes('FROM curriculum_catalog')) {
 			return { active_total_days: this.activeTotalDays };
 		}
+		if (sql.includes('SELECT start_date, entry_day FROM learners')) return this.learnerRow;
 		if (sql.includes('SELECT response_json')) {
 			return this.processedResponse ? { response_json: this.processedResponse } : null;
 		}
@@ -100,6 +102,7 @@ function mutation(currentDay = 1): SyncMutation {
 				goal: 'Speak',
 				timeZone: 'Asia/Tokyo',
 				startDate: '2026-08-10',
+				entryDay: 1,
 				currentDay,
 				streak: 0,
 				updatedAt: '2026-08-10T00:00:00.000Z',
@@ -199,6 +202,38 @@ describe('D1 synchronization integrity', () => {
 		).rejects.toEqual(new CurriculumDayUnavailableError(91, 90));
 		expect(database.statements).toHaveLength(2);
 		expect(database.statements[1]?.sql).toContain('FROM curriculum_catalog');
+	});
+
+	it('uses a learner Stage entry as the first authoritative Core day', async () => {
+		const database = new FakeDatabase();
+		database.activeTotalDays = 365;
+		database.learnerRow = { start_date: '2026-08-10', entry_day: 181 };
+		database.batchResults = [
+			{ success: true, meta: { changes: 1 } },
+			{ success: true, meta: { changes: 1 } },
+			{ success: true, meta: { changes: 1 } },
+			{ success: true, meta: { changes: 1 } },
+		];
+
+		await new EnglishOsRepository(database).patchProgress(
+			'learner-test',
+			'2026-08-10',
+			{
+				curriculumDay: 181,
+				reviewCompleted: true,
+				expectedVersion: 0,
+				clientMutationId: '99999999-9999-4999-8999-999999999999',
+				updatedAt: '2026-08-10T00:00:00.000Z',
+			},
+			'2026-08-10T00:00:01.000Z',
+		);
+
+		expect(
+			database.statements.some(
+				(statement) =>
+					statement.sql.includes('INSERT INTO daily_progress') && statement.values.includes(181),
+			),
+		).toBe(true);
 	});
 
 	it('normalizes a legacy date-only review-card due date in incremental changes', async () => {

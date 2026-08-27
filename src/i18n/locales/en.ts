@@ -52,9 +52,12 @@ export const en: Record<TranslationKey, string> = {
 	'onboarding.minutes': 'Preferred study budget',
 	'onboarding.budgetHelp':
 		'This is your preferred time budget, not a promise that every later Core lesson fits inside it. Stage workload is shown separately.',
+	'onboarding.startingPoint': 'Stage starting point',
+	'onboarding.startingPointHelp':
+		'Choose Day 1, 91, 181, or 271. Earlier days stay not completed; no reviews, vocabulary, sessions, or streak are invented. This is not a certified placement result.',
 	'onboarding.timezone': 'Study time zone (IANA)',
 	'onboarding.timezoneHelp': 'Used to calculate day boundaries and review times.',
-	'onboarding.startDate': 'Start Day 1 on',
+	'onboarding.startDate': 'Start your selected Day on',
 	'onboarding.startDateHelp': 'No learning record is created before this date.',
 	'onboarding.start': 'Continue to baseline',
 	'today.title': "Today's learning",
@@ -73,7 +76,7 @@ export const en: Record<TranslationKey, string> = {
 	'today.boostDescription': 'Extra study is optional. Skipping it is not a failure.',
 	'today.chooseBoost': 'Choose a Boost',
 	'today.beforeStart': 'Waiting for your start date',
-	'today.beforeStartDescription': 'Day 1 starts on {date}. You can change this in Settings.',
+	'today.beforeStartDescription': 'Day {day} starts on {date}. You can change this in Settings.',
 	'today.graduated': 'You completed {days} days',
 	'today.graduatedDescription':
 		'No new Core day will be created. Your history, library, and analytics remain available.',
@@ -94,6 +97,7 @@ export const en: Record<TranslationKey, string> = {
 	'curriculum.completed': 'Complete',
 	'curriculum.today': 'Today',
 	'curriculum.notStarted': 'Not started',
+	'curriculum.earlier': 'Earlier curriculum · Not completed',
 	'curriculum.previewed': 'Previewed',
 	'curriculum.vocabulary': 'Vocabulary',
 	'curriculum.phrases': 'Useful phrases',

@@ -30,6 +30,7 @@ beforeEach(async () => {
 		goal: 'Stage assessment storage',
 		timeZone: 'Asia/Tokyo',
 		startDate: '2026-08-13',
+		entryDay: 1,
 		currentDay: 1,
 		streak: 0,
 		updatedAt: now,
