@@ -11,7 +11,7 @@ test('an experienced learner starts at Day 181 without fabricated earlier record
 	await page.getByRole('button', { name: /Day 181を始める/ }).click();
 
 	await expect(page).toHaveURL(/\/today$/u);
-	await expect(page.getByText('Day 181')).toBeVisible();
+	await expect(page.getByText(/DAY 181/)).toBeVisible();
 	const evidenceCounts = await page.evaluate(async () => {
 		const request = indexedDB.open('english-os');
 		const database = await new Promise<IDBDatabase>((resolve, reject) => {
@@ -55,5 +55,6 @@ test('English onboarding supports the Day 271 boundary honestly', async ({ page 
 	await page.getByRole('button', { name: 'Continue to baseline' }).click();
 	await expect(page.getByText(/Day 271 is your self-selected starting point/u)).toBeVisible();
 	await page.getByRole('button', { name: /Start Day 271/u }).click();
-	await expect(page.getByText('Day 271')).toBeVisible();
+	await expect(page).toHaveURL(/\/today$/u);
+	await expect(page.getByText(/DAY 271/)).toBeVisible();
 });
