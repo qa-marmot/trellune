@@ -32,6 +32,10 @@ state. The product UI and bundled learner support are English here. See the
 - **Continuity without shortcuts:** Large required-review sets can be paused and
   resumed deterministically, and unfinished practice can be restored from a
   bounded, device-only draft without creating progress or sync data.
+- **Start where you are:** Experienced learners may begin at a Stage boundary
+  (Day 1, 91, 181, or 271). Earlier days stay explicitly uncompleted and no
+  progress, review, or streak record is synthesized. A baseline result never
+  changes the start automatically and is not a placement or certification.
 - **A complete practice loop:** Retrieval, grammar transfer, productive
   vocabulary, Reading/Writing Labs, authored feedback, self-review, retry, and
   authentic conversation are explicit steps.
@@ -56,6 +60,8 @@ If the project is useful, a [GitHub star](https://github.com/qa-marmot/trellune)
 helps other local-first language learners find it.
 
 ## How it works
+
+Review → Learn → Practice → Talk → Import feedback → Review again.
 
 ```mermaid
 flowchart LR
@@ -136,6 +142,9 @@ language-neutral `SESSION_JSON` 1.1 input contract, which is stored through
 additive neutral fields while legacy v1.0 payloads remain unchanged. `ASSESSMENT_JSON` 1.0, backup v2, sync protocol v1,
 and Dexie v5 remain unchanged. Required Core learning remains distinct from
 optional Boost learning.
+
+Built with React, TypeScript, Vite, Dexie / IndexedDB, Hono, Cloudflare
+Workers / D1, Zod, PWA / Workbox, Vitest, Playwright, and axe.
 
 ## Verify a change
 
