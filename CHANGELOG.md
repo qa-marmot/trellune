@@ -3,6 +3,20 @@
 All notable changes are recorded here. Trellune follows semantic versioning
 when a release is made.
 
+## Unreleased
+
+- Added learning-continuity support: large required-review sets pause and resume
+  deterministically, Today separates the preferred study budget from the Stage's
+  actual Core minimum, and unfinished practice restores from a bounded
+  device-only draft without creating progress or sync data
+- Added self-selected experienced-learner entry at Day 1, 91, 181, or 271.
+  Earlier days stay explicitly uncompleted and no progress, review, acquisition,
+  session, assessment, or streak record is synthesized. The baseline never
+  changes the entry automatically and is not a placement result or certification
+- Added D1 migration 0014 for the same defaulted entry boundary. Pre-entryDay
+  Dexie v5 profiles, backup v2 payloads, and sync v1 payloads normalize to
+  Day 1. No Dexie, sync, backup, Core, Boost, or SRS contract change
+
 ## v1.9.0 — Full English learning support
 
 - Added complete English learner support for all 365 curriculum days while
