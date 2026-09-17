@@ -72,7 +72,7 @@
 	},
 	"dependencies": {
 		"dexie": "^4.4.4",
-		"hono": "^4.13.0",
+		"hono": "^4.13.5",
 		"react": "^19.2.8",
 		"react-dom": "^19.2.8",
 		"react-router-dom": "^7.18.2",
